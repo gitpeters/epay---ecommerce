@@ -23,4 +23,5 @@ public class CustomResponse {
         this.status = status;
         this.message = message;
     }
+
 }

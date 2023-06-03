@@ -8,34 +8,38 @@ import com.peters.User_Registration_and_Email_Verification.entity.VerificationTo
 import com.peters.User_Registration_and_Email_Verification.event.RegistrationCompletePublisher;
 import com.peters.User_Registration_and_Email_Verification.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.repository.IVerificationTokenRepository;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService implements IUserService{
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final IVerificationTokenRepository tokenRepository;
+    private final EmailService emailService;
 
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
 
     private final ApplicationEventPublisher publisher;
+
+    private final HttpServletRequest servletRequest;
     @Override
     public ResponseEntity<CustomResponse> getAllUsers() {
         List<UserEntity> users = userRepository.findAll();
@@ -63,8 +67,9 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public ResponseEntity<CustomResponse> registerUser(UserRequestDto request, final HttpServletRequest servletRequest) {
+    public ResponseEntity<CustomResponse> registerUser(UserRequestDto request) {
         Optional<UserEntity> userOpt = userRepository.findUserByEmail(request.getEmail());
+
         if(userOpt.isPresent()){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "User already exists"));
         }
@@ -133,6 +138,8 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseEntity<CustomResponse> verifyEmail(String token) {
+        String url = applicationUrl(servletRequest)+"/api/v1/register/resend-token?token="+token;
+        log.info("Resend link {} ", url);
         Optional<VerificationToken> tokenOpt = tokenRepository.findByToken(token);
         if(!tokenOpt.isPresent()){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No token found"));
@@ -141,11 +148,33 @@ public class UserService implements IUserService{
         if(theToken.getUser().isEnabled()){
             return ResponseEntity.ok().body(new CustomResponse(HttpStatus.FOUND, "This user has already been verified, please login"));
         }
-        CustomResponse verficationResult = validateToken(token);
-        if(verficationResult.getMessage().equalsIgnoreCase("Valid")){
+        String message = "<p> Link has expired.<a href=\"" + url + "\">Get a new verification link</a></p>";
+        CustomResponse verificationResult = validateToken(token);
+        if(verificationResult.getMessage().equalsIgnoreCase("Valid")){
             return ResponseEntity.ok().body(new CustomResponse(HttpStatus.OK, "Email verified successfully. Kindly proceed to login"));
         }
-        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Token is either expired or invalid"));
+        CustomResponse response = new CustomResponse(HttpStatus.BAD_REQUEST, message);
+        return ResponseEntity.badRequest().body(response);
+    }
+
+
+    public VerificationToken generateNewVerificationToken(String oldToken) {
+        Optional<VerificationToken> tokenOpt = tokenRepository.findByToken(oldToken);
+        VerificationToken theToken = tokenOpt.get();
+        var verificationTokenTime = new VerificationToken();
+        theToken.setToken(UUID.randomUUID().toString());
+        theToken.setExpirationTime(verificationTokenTime.getTokenExpirationTime());
+        return  tokenRepository.save(theToken);
+    }
+    @Override
+    public ResponseEntity<?> resendVerificationTokenEmail(String token) throws MessagingException, UnsupportedEncodingException {
+
+        VerificationToken theToken = generateNewVerificationToken(token);
+        UserEntity user = theToken.getUser();
+        String url = applicationUrl(servletRequest)+"/api/v1/register/verify-email?token="+theToken.getToken();
+
+        emailService.sendVerificationEmail(url, user);
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "New verification link has been sent to your email and it will expire in 1min. Kindly check your email to activate your account"));
     }
 
     private CustomResponse validateToken(String token) {
@@ -158,7 +187,7 @@ public class UserService implements IUserService{
         UserEntity user = theToken.getUser();
         Calendar calendar = Calendar.getInstance();
         if((theToken.getExpirationTime().getTime()-calendar.getTime().getTime())<=0){
-            tokenRepository.delete(theToken);
+            //tokenRepository.delete(theToken);
             return new CustomResponse(HttpStatus.BAD_REQUEST, "Token has expired");
         }
 
