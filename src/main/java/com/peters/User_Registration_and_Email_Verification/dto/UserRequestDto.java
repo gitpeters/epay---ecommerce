@@ -1,9 +1,12 @@
 package com.peters.User_Registration_and_Email_Verification.dto;
 
+import com.peters.User_Registration_and_Email_Verification.entity.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 @Builder
 @Data
@@ -14,5 +17,4 @@ public class UserRequestDto {
     private String lastName;
     private String email;
     private String password;
-    private String role;
 }

@@ -21,7 +21,8 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(UserEntity user) {
         this.username = user.getEmail();
         this.password = user.getPassword();
-        this.authorities = Arrays.stream(user.getRole().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        this.authorities = Arrays.stream(user.getRoles().toString()
+                .split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
         this.isEnabled = user.isEnabled();
     }
 

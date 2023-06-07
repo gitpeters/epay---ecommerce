@@ -1,7 +1,9 @@
 package com.peters.User_Registration_and_Email_Verification.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NaturalId;
@@ -14,12 +16,14 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NaturalId
     private String name;
+    @JsonIgnore
     @ManyToMany(mappedBy = "roles")
     private Collection<UserEntity> users = new HashSet<>();
 
@@ -37,13 +41,13 @@ public class UserRole {
 
     // remove single user from role
     public void removeUserFromRole(UserEntity user) {
-        user.getRole().remove(this);
+        user.getRoles().remove(this);
         this.getUsers().remove(user);
     }
 
     // assign role to user
     public void assignUserToRole(UserEntity user){
-        user.getRole().add(this);
+        user.getRoles().add(this);
         this.getUsers().add(user);
     }
 

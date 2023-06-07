@@ -4,10 +4,12 @@ import com.peters.User_Registration_and_Email_Verification.dto.CustomResponse;
 import com.peters.User_Registration_and_Email_Verification.dto.UserRequestDto;
 import com.peters.User_Registration_and_Email_Verification.dto.UserResponseDto;
 import com.peters.User_Registration_and_Email_Verification.entity.UserEntity;
+import com.peters.User_Registration_and_Email_Verification.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.entity.VerificationToken;
 import com.peters.User_Registration_and_Email_Verification.event.RegistrationCompletePublisher;
 import com.peters.User_Registration_and_Email_Verification.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.repository.IVerificationTokenRepository;
+import com.peters.User_Registration_and_Email_Verification.repository.RoleRepository;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class UserService implements IUserService{
     private final ApplicationEventPublisher publisher;
 
     private final HttpServletRequest servletRequest;
+    private final RoleRepository roleRepository;
     @Override
     public ResponseEntity<CustomResponse> getAllUsers() {
         List<UserEntity> users = userRepository.findAll();
@@ -61,7 +64,7 @@ public class UserService implements IUserService{
                 .email(user.getEmail())
                 .lastName(user.getLastName())
                 .firstName(user.getFirstName())
-                .role(user.getRole())
+                .role(new HashSet<>(user.getRoles()))
                 .isEnabled(user.isEnabled())
                 .build();
     }
@@ -91,14 +94,12 @@ public class UserService implements IUserService{
         if(request.getLastName() == null){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "lastName is required"));
         }
-        if(request.getRole() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "role is required"));
-        }
+        UserRole role = roleRepository.findByName("ROLE_USER").get();
         UserEntity newUser = UserEntity.builder()
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .role(request.getRole())
+                .roles(Collections.singleton(role))
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
         userRepository.save(newUser);
@@ -124,7 +125,7 @@ public class UserService implements IUserService{
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .role(user.getRole())
+                .role(new HashSet<>(user.getRoles()))
                 .isEnabled(user.isEnabled())
                 .build();
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, Arrays.asList(response), "Successful"));

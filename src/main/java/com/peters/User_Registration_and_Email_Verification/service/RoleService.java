@@ -1,5 +1,6 @@
 package com.peters.User_Registration_and_Email_Verification.service;
 
+import com.peters.User_Registration_and_Email_Verification.dto.UserRoleRequestDto;
 import com.peters.User_Registration_and_Email_Verification.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.exception.RoleAlreadyExistException;
@@ -24,11 +25,13 @@ public class RoleService implements IRoleService{
     }
 
     @Override
-    public UserRole createRole(UserRole role) {
-        Optional<UserRole> roleOpt = roleRepository.findByName(role.getName());
+    public UserRole createRole(UserRoleRequestDto request) {
+        Optional<UserRole> roleOpt = roleRepository.findByName(request.getName());
         if(roleOpt.isPresent()){
             throw new RoleAlreadyExistException(roleOpt.get().getName()+ " role already exist!");
         }
+        UserRole role = UserRole.builder()
+                .name(request.getName()).build();
         return roleRepository.save(role);
     }
 
@@ -63,8 +66,8 @@ public class RoleService implements IRoleService{
     @Override
     public UserEntity assignUserToRole(Long userId, Long roleId) {
         Optional<UserEntity> user = userRepository.findById(userId);
-        Optional<UserRole> role = roleRepository.findById(userId);
-        if(user.isPresent() && user.get().getRole().contains(role.get())){
+        Optional<UserRole> role = roleRepository.findById(roleId);
+        if(user.isPresent() && user.get().getRoles().contains(role.get())){
             throw new UserAlreadyExistsException(user.get().getFirstName() + " is already assigned to the "+ role.get().getName() + " role");
         }
         role.ifPresent(assignRole -> assignRole.assignUserToRole(user.get()));
