@@ -1,5 +1,14 @@
 server:
   port: 8081
+#jwt
+jwt:
+  access:
+    expiration:
+      milliseconds: 900000
+  refresh:
+    expiration:
+      milliseconds: 3000000
+  secret: securesecuresecuresecuresecuresecuresecuresecuresecuresecuresecuresecuresecuresecuresecucuresecuresecuresecure
 
 spring:
   datasource:

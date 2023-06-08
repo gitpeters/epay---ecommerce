@@ -51,5 +51,4 @@ public class UserRole {
         this.getUsers().add(user);
     }
 
-
 }

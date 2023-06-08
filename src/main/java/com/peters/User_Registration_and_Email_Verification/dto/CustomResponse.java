@@ -16,7 +16,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CustomResponse {
     private HttpStatus status;
-    private List<UserResponseDto> data;
+    private Object data;
     private String message;
 
     public CustomResponse(HttpStatus status, String message) {

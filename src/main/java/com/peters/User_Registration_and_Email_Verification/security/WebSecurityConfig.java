@@ -1,16 +1,23 @@
 package com.peters.User_Registration_and_Email_Verification.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
 
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtRequestFilter jwtRequestFilter;
     private static final String[] UN_SECURED_URL = {
             "/api/v1/register/**",
             "/api/v1/auth/**",
@@ -26,7 +33,7 @@ public class WebSecurityConfig {
     };
 
     private static final String[] SECURED_URL = {
-            "/api/v1/users/**",
+            "/api/v1/user-role/**"
 
     };
     @Bean
@@ -34,13 +41,24 @@ public class WebSecurityConfig {
         http
                 .authorizeRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(UN_SECURED_URL).permitAll()
-                        .anyRequest().hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(SECURED_URL).hasRole("ADMIN")
+                        .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                 )
-                .formLogin(formLogin -> {}
-                )
-                .csrf().disable();
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
 
 }

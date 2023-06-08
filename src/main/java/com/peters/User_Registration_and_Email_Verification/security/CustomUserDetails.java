@@ -1,6 +1,8 @@
 package com.peters.User_Registration_and_Email_Verification.security;
 
 import com.peters.User_Registration_and_Email_Verification.entity.UserEntity;
+import com.peters.User_Registration_and_Email_Verification.entity.UserRole;
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,8 +23,9 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(UserEntity user) {
         this.username = user.getEmail();
         this.password = user.getPassword();
-        this.authorities = Arrays.stream(user.getRoles().toString()
-                .split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        this.authorities = user.getRoles().stream()
+                .map(UserRole::getName)
+                .map(SimpleGrantedAuthority::new).collect(Collectors.toList());
         this.isEnabled = user.isEnabled();
     }
 
