@@ -61,6 +61,11 @@ public class ProductController {
         return productService.getProductByName(productName);
     }
 
+    @PatchMapping("/{productId}")
+    public ResponseEntity<CustomResponse> editProduct(@PathVariable("productId") Long productId, @RequestBody ProductRequestDto requestDto){
+        return productService.UpdateProduct(productId, requestDto);
+    }
+
     @DeleteMapping("/{productId}")
     public ResponseEntity<CustomResponse> deleteProduct(@PathVariable("productId") Long productId){
         return productService.deleteProduct(productId);

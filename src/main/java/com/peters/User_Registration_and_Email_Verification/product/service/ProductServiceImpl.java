@@ -5,6 +5,7 @@ import com.peters.User_Registration_and_Email_Verification.product.dto.ProductRe
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductCategory;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductImage;
+import com.peters.User_Registration_and_Email_Verification.product.exception.ProductNotFoundException;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductCategoryRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductImageRepository;
@@ -13,15 +14,15 @@ import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntit
 import com.peters.User_Registration_and_Email_Verification.user.exception.DuplicateException;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,6 +68,7 @@ public class ProductServiceImpl implements IProductService{
                 .price(request.getPrice())
                 .description(request.getDescription())
                 .category(Collections.singleton(category))
+                .users(Collections.singleton(user.get()))
                 .unit(request.getUnit())
                 .build();
 
@@ -127,21 +129,22 @@ public class ProductServiceImpl implements IProductService{
 
     @Override
     public ResponseEntity<CustomResponse> UpdateProduct(Long productId, ProductRequestDto requestDto) {
-        Optional<Product> productOpt = productRepository.findById(productId);
-        if(!productOpt.isPresent()){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No Product found"));
+        Product existingProduct = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        if (existingProduct == null) {
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No product found!"));
         }
 
-        Product product = productOpt.get();
-        List<ProductCategory> categories = categoryRepository.findByProducts(product);
-        product.setName(requestDto.getName());
-        product.setDescription(requestDto.getDescription());
-        product.setPrice(requestDto.getPrice());
-        product.setUnit(requestDto.getUnit());
-        product.setCategory(categories);
+        // Perform the partial update
+        BeanUtils.copyProperties(requestDto, existingProduct, getNullPropertyNames(requestDto));
 
-        productRepository.save(product);
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, product,"Successful"));
+        // Save the updated product
+        Product updatedProduct = productRepository.save(existingProduct);
+
+        // Return the response
+        if (updatedProduct != null) {
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, updatedProduct,"Successfully updated product"));
+        }
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong! Could not update product"));
     }
 
     private ProductResponseDto mappedToProductResponse(Product product){
@@ -160,5 +163,20 @@ public class ProductServiceImpl implements IProductService{
         List<String> imagePaths = imageRepository.findByImagePath(product);
 
         return imagePaths;
+    }
+
+    private static String[] getNullPropertyNames(Object source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> emptyNames = new HashSet<>();
+        for (java.beans.PropertyDescriptor pd : pds) {
+            Object srcValue = src.getPropertyValue(pd.getName());
+            if (srcValue == null) {
+                emptyNames.add(pd.getName());
+            }
+        }
+        String[] result = new String[emptyNames.size()];
+        return emptyNames.toArray(result);
     }
 }
