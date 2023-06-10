@@ -1,8 +1,8 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.exception.RoleAlreadyExistException;
 import com.peters.User_Registration_and_Email_Verification.user.exception.UserAlreadyExistsException;
 import com.peters.User_Registration_and_Email_Verification.user.exception.UserNotFoundException;
@@ -31,7 +31,7 @@ public class RoleService implements IRoleService{
             throw new RoleAlreadyExistException(roleOpt.get().getName()+ " role already exist!");
         }
         UserRole role = UserRole.builder()
-                .name(request.getName()).build();
+                .name("ROLE_"+request.getName()).build();
         return roleRepository.save(role);
     }
 

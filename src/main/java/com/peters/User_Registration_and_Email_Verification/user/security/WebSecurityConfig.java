@@ -32,8 +32,14 @@ public class WebSecurityConfig {
             "/swagger-ui.html"
     };
 
-    private static final String[] SECURED_URL = {
-            "/api/v1/user-role/**"
+    private static final String[] ADMIN_SECURED_URL = {
+            "/api/v1/user-role/**",
+            "/api/v1/admin/**"
+
+    };
+
+    private static final String[] VENDOR_SECURED_URL = {
+            "/api/v1/product/**"
 
     };
     @Bean
@@ -41,7 +47,8 @@ public class WebSecurityConfig {
         http
                 .authorizeRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(UN_SECURED_URL).permitAll()
-                        .requestMatchers(SECURED_URL).hasRole("ADMIN")
+                        .requestMatchers(ADMIN_SECURED_URL).hasRole("ADMIN")
+                        .requestMatchers(VENDOR_SECURED_URL).hasRole("VENDOR")
                         .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                 )
                 .csrf().disable()

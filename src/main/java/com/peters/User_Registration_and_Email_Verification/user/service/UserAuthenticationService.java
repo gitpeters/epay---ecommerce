@@ -1,14 +1,14 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
-import com.peters.User_Registration_and_Email_Verification.user.dto.LoginRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.dto.LoginResponse;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
-import com.peters.User_Registration_and_Email_Verification.user.exception.ApplicationAuthenticationException;
-import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.user.security.CustomUserDetails;
 import com.peters.User_Registration_and_Email_Verification.user.security.CustomerUserDetailsService;
 import com.peters.User_Registration_and_Email_Verification.user.security.JwtTokenUtil;
+import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
+import com.peters.User_Registration_and_Email_Verification.user.dto.LoginRequestDto;
+import com.peters.User_Registration_and_Email_Verification.user.exception.ApplicationAuthenticationException;
+import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

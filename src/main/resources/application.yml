@@ -35,4 +35,5 @@ spring:
           starttls:
             enable: true
 
-
+image:
+  path: src/main/resources/product_images/

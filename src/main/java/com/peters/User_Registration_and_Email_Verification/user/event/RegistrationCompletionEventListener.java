@@ -1,8 +1,8 @@
 package com.peters.User_Registration_and_Email_Verification.user.event;
 
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
-import com.peters.User_Registration_and_Email_Verification.user.service.EmailService;
 import com.peters.User_Registration_and_Email_Verification.user.service.IUserService;
+import com.peters.User_Registration_and_Email_Verification.user.service.EmailService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

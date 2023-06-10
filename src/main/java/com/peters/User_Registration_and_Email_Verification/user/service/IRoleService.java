@@ -1,8 +1,8 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
 
 import java.util.List;
 

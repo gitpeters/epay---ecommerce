@@ -1,6 +1,6 @@
-package com.peters.User_Registration_and_Email_Verification.user.entity;
+package com.peters.User_Registration_and_Email_Verification.product.entity;
 
-import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
+import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,30 +13,31 @@ import java.util.Calendar;
 import java.util.Collection;
 
 @Data
-@Builder
 @Entity
-@Table(name = "user")
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+@Builder
+public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String firstName;
-    private String lastName;
     @NaturalId(mutable = true)
-    private String email;
-    private String password;
+    private String name;
+    private String description;
+    private Double price;
+    private int unit;
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH})
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-    inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-    private Collection<UserRole> roles;
-    private boolean isEnabled = false;
-    @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
-    private Collection<Product> products;
-
+    @JoinTable(name = "product_category",
+            joinColumns = @JoinColumn(name = "product_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id", referencedColumnName = "id"))
+    private Collection<ProductCategory> category;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "product_user",
+            joinColumns = @JoinColumn(name = "product_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    private Collection<UserEntity> users;
     private Timestamp createdOn;
-
     private Timestamp lastModifiedOn;
 
     @PrePersist
@@ -49,4 +50,5 @@ public class UserEntity {
     public void preUpdate() {
         lastModifiedOn = Timestamp.from(Calendar.getInstance().toInstant());
     }
+
 }

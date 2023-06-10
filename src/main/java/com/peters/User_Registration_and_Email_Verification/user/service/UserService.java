@@ -1,14 +1,14 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserResponseDto;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.user.entity.VerificationToken;
 import com.peters.User_Registration_and_Email_Verification.user.event.RegistrationCompletePublisher;
-import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IVerificationTokenRepository;
+import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserResponseDto;
+import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.user.repository.RoleRepository;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
