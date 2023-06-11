@@ -4,7 +4,6 @@ import com.peters.User_Registration_and_Email_Verification.product.dto.ProductRe
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductResponseDto;
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductCategory;
-import com.peters.User_Registration_and_Email_Verification.product.entity.ProductImage;
 import com.peters.User_Registration_and_Email_Verification.product.exception.ProductNotFoundException;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductCategoryRepository;
@@ -14,19 +13,21 @@ import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntit
 import com.peters.User_Registration_and_Email_Verification.user.exception.DuplicateException;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements IProductService{
     private final IProductRepository productRepository;
     private final ProductCategoryRepository categoryRepository;
@@ -34,6 +35,9 @@ public class ProductServiceImpl implements IProductService{
     private final IUserRepository userRepository;
     private final ICategoryService categoryService;
     private final ProductImageService productImageService;
+    private final HashOperations<String, String, Object> hashOperations;
+
+    private static final String PRODUCT_CACHE = "products";
 
     @Override
     public ResponseEntity<CustomResponse> getAllProducts(){
@@ -79,31 +83,54 @@ public class ProductServiceImpl implements IProductService{
 
     @Override
     public ResponseEntity<CustomResponse> getProductByName(String name){
+            CustomResponse cacheResult = (CustomResponse) hashOperations.get(PRODUCT_CACHE, name);
+            if(cacheResult!=null){
+                log.info("fetched result from cache {}: {}",PRODUCT_CACHE, cacheResult);
+                return ResponseEntity.ok(cacheResult);
+            }
             List<Product> products = productRepository.findByNameContainsIgnoreCase(name);
             List<ProductResponseDto> responseDto = products.stream()
                     .map(this::mappedToProductResponse)
                     .collect(Collectors.toList());
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, responseDto, "Successful"));
+            CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDto, "Successful");
+            hashOperations.put(PRODUCT_CACHE, name, customResponse);
+            return ResponseEntity.ok(customResponse);
 
     }
 
     @Override
     public ResponseEntity<CustomResponse> getProductByCategory(String categoryName) {
+        CustomResponse cacheResult = (CustomResponse) hashOperations.get(PRODUCT_CACHE, categoryName);
+        if(cacheResult!=null){
+            log.info("fetched result from cache {}: {}",PRODUCT_CACHE, cacheResult);
+            return ResponseEntity.ok(cacheResult);
+        }
         List<Product> products = productRepository.findByCategoryNameContainsIgnoreCase(categoryName);
         List<ProductResponseDto> responseDtoList = products
                 .stream()
                 .map((this::mappedToProductResponse))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, responseDtoList, "Successfully"));
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDtoList, "Successful");
+        hashOperations.put(PRODUCT_CACHE, categoryName, customResponse);
+        return ResponseEntity.ok(customResponse);
     }
 
     @Override
     public ResponseEntity<CustomResponse> getProductByPriceRange(Double min, Double max) {
+        String cacheKey = generateCacheKey(min, max);
+        CustomResponse cachedResponse = (CustomResponse) hashOperations.get(PRODUCT_CACHE, cacheKey);
+        if(cachedResponse != null){
+            System.out.println("Fetched product result from cache"+ PRODUCT_CACHE);
+            return ResponseEntity.ok(cachedResponse);
+        }
+
         List<Product> products = productRepository.findByPriceBetween(min, max);
         List<ProductResponseDto> responseDtoList = products.stream()
                 .map((this::mappedToProductResponse))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, responseDtoList, "Successfully"));
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDtoList, "Successfully");
+        hashOperations.put(PRODUCT_CACHE, cacheKey, customResponse);
+        return ResponseEntity.ok(customResponse);
     }
 
     @Override
@@ -178,5 +205,9 @@ public class ProductServiceImpl implements IProductService{
         }
         String[] result = new String[emptyNames.size()];
         return emptyNames.toArray(result);
+    }
+
+    private String generateCacheKey(double minPrice, double maxPrice) {
+        return minPrice + "-" + maxPrice;
     }
 }

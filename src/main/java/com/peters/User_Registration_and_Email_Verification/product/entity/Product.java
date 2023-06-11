@@ -1,5 +1,7 @@
 package com.peters.User_Registration_and_Email_Verification.product.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
