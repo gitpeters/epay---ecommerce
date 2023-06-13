@@ -20,4 +20,5 @@ public interface IUserService {
     ResponseEntity<CustomResponse> verifyEmail(String token);
 
     ResponseEntity<?> resendVerificationTokenEmail(String oldToken)throws MessagingException, UnsupportedEncodingException;
+
 }

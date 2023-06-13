@@ -1,16 +1,17 @@
 package com.peters.User_Registration_and_Email_Verification.product.service;
 
+import com.peters.User_Registration_and_Email_Verification.exception.DuplicateException;
+import com.peters.User_Registration_and_Email_Verification.exception.ProductNotFoundException;
+import com.peters.User_Registration_and_Email_Verification.product.dto.CartResponse;
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductRequestDto;
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductResponseDto;
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductCategory;
-import com.peters.User_Registration_and_Email_Verification.product.exception.ProductNotFoundException;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductCategoryRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductImageRepository;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
-import com.peters.User_Registration_and_Email_Verification.user.exception.DuplicateException;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,10 @@ public class ProductServiceImpl implements IProductService{
     private final ProductImageService productImageService;
     private final HashOperations<String, String, Object> hashOperations;
 
+    private final RedisTemplate redisTemplate;
+
     private static final String PRODUCT_CACHE = "products";
+    private static final String CART_ITEM = "cart";
 
     @Override
     public ResponseEntity<CustomResponse> getAllProducts(){
@@ -45,7 +50,6 @@ public class ProductServiceImpl implements IProductService{
         List<ProductResponseDto> responseDtoList=  products.stream().map((this::mappedToProductResponse)).collect(Collectors.toList());
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, Arrays.asList(responseDtoList), "Successful"));
     }
-
 
 
      @Override
@@ -96,6 +100,32 @@ public class ProductServiceImpl implements IProductService{
             hashOperations.put(PRODUCT_CACHE, name, customResponse);
             return ResponseEntity.ok(customResponse);
 
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> getProductById(Long productId) {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if(!productOpt.isPresent()){
+            throw new ProductNotFoundException("No product found");
+        }
+        CustomResponse cacheResult = (CustomResponse) hashOperations.get(PRODUCT_CACHE, productId.toString());
+        if(cacheResult!=null){
+            log.info("fetched result from cache {}: {}",PRODUCT_CACHE, cacheResult);
+            return ResponseEntity.ok(cacheResult);
+        }
+        List<String> imagePaths = getImagePaths(productOpt.get());
+        ProductResponseDto responseDto = ProductResponseDto.builder()
+                .id(productOpt.get().getId())
+                .name(productOpt.get().getName())
+                .price(productOpt.get().getPrice())
+                .unit(productOpt.get().getUnit())
+                .description(productOpt.get().getDescription())
+                .categories(productOpt.get().getCategory().stream().toList())
+                .productImagePath(imagePaths)
+                .build();
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDto, "Successful");
+        hashOperations.put(PRODUCT_CACHE, productId.toString(), customResponse);
+        return ResponseEntity.ok(customResponse);
     }
 
     @Override
@@ -209,5 +239,36 @@ public class ProductServiceImpl implements IProductService{
 
     private String generateCacheKey(double minPrice, double maxPrice) {
         return minPrice + "-" + maxPrice;
+    }
+
+    @Override
+    public ResponseEntity<CartResponse> addProductToCart(Long productId, int unit) {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if(!productOpt.isPresent()){
+            throw new ProductNotFoundException("No product found");
+        }
+        int productUnit = productOpt.get().getUnit();
+        if(unit>productUnit){
+            return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.toString(), "Out of stock"));
+        }
+        double subTotal = productOpt.get().getPrice() * unit;
+        CartResponse cartResponse = CartResponse.builder()
+                .productName(productOpt.get().getName())
+                .amount(productOpt.get().getPrice())
+                .unit(unit)
+                .subtotal(subTotal)
+                .message("Successful")
+                .status(HttpStatus.OK.toString())
+                .build();
+        //save to redis
+        redisTemplate.opsForHash().put(CART_ITEM, productId.toString(), cartResponse);
+
+        return ResponseEntity.ok(cartResponse);
+    }
+
+    @Override
+    public ResponseEntity<List<CartResponse>> getAllCarts() {
+        List<CartResponse> carts = redisTemplate.opsForHash().values(CART_ITEM);
+        return ResponseEntity.ok(carts);
     }
 }

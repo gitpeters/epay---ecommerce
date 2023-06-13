@@ -2,8 +2,8 @@ package com.peters.User_Registration_and_Email_Verification.product.service;
 
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductImage;
-import com.peters.User_Registration_and_Email_Verification.product.exception.ProductImageNotFoundException;
-import com.peters.User_Registration_and_Email_Verification.product.exception.ProductNotFoundException;
+import com.peters.User_Registration_and_Email_Verification.exception.ProductImageNotFoundException;
+import com.peters.User_Registration_and_Email_Verification.exception.ProductNotFoundException;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductImageRepository;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

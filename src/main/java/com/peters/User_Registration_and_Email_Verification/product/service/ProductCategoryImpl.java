@@ -3,7 +3,7 @@ package com.peters.User_Registration_and_Email_Verification.product.service;
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductCategoryRequest;
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductCategory;
-import com.peters.User_Registration_and_Email_Verification.product.exception.CategoryAlreadyExistsException;
+import com.peters.User_Registration_and_Email_Verification.exception.CategoryAlreadyExistsException;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductCategoryRepository;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
