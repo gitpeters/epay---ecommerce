@@ -1,8 +1,5 @@
 package com.peters.User_Registration_and_Email_Verification.config;
 
-import com.peters.User_Registration_and_Email_Verification.product.dto.ProductResponseDto;
-import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -27,4 +27,7 @@ public interface IProductService {
 
     ResponseEntity<List<CartResponse>> getAllCarts();
 
+    ResponseEntity<CartResponse> deleteProductFromCart(Long productId);
+
+    ResponseEntity<CartResponse> clearCart();
 }

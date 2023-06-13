@@ -59,4 +59,14 @@ public class UserController {
     public ResponseEntity<List<CartResponse>> getAllCarts(){
         return productService.getAllCarts();
     }
+
+    @DeleteMapping("/remove-from-cart/{productId}")
+    public ResponseEntity<CartResponse> deleteProductFromCart(@PathVariable("productId") Long productId){
+        return productService.deleteProductFromCart(productId);
+    }
+
+    @DeleteMapping("/clear-cart")
+    public ResponseEntity<CartResponse> clearCart(){
+        return productService.clearCart();
+    }
 }

@@ -148,9 +148,10 @@ public class ProductServiceImpl implements IProductService{
     @Override
     public ResponseEntity<CustomResponse> getProductByPriceRange(Double min, Double max) {
         String cacheKey = generateCacheKey(min, max);
-        CustomResponse cachedResponse = (CustomResponse) hashOperations.get(PRODUCT_CACHE, cacheKey);
-        if(cachedResponse != null){
-            System.out.println("Fetched product result from cache"+ PRODUCT_CACHE);
+        Object cachedResponseObj = hashOperations.get(PRODUCT_CACHE, cacheKey);
+        if (cachedResponseObj != null && cachedResponseObj instanceof CustomResponse) {
+            CustomResponse cachedResponse = (CustomResponse) cachedResponseObj;
+            log.info("Fetched product result from cache {} ", PRODUCT_CACHE);
             return ResponseEntity.ok(cachedResponse);
         }
 
@@ -162,6 +163,7 @@ public class ProductServiceImpl implements IProductService{
         hashOperations.put(PRODUCT_CACHE, cacheKey, customResponse);
         return ResponseEntity.ok(customResponse);
     }
+
 
     @Override
     public ResponseEntity<CustomResponse> deleteProduct(Long productId) {
@@ -265,10 +267,21 @@ public class ProductServiceImpl implements IProductService{
 
         return ResponseEntity.ok(cartResponse);
     }
-
     @Override
     public ResponseEntity<List<CartResponse>> getAllCarts() {
         List<CartResponse> carts = redisTemplate.opsForHash().values(CART_ITEM);
         return ResponseEntity.ok(carts);
+    }
+
+    @Override
+    public ResponseEntity<CartResponse> deleteProductFromCart(Long productId) {
+        redisTemplate.opsForHash().delete(CART_ITEM, productId.toString());
+        return ResponseEntity.ok(new CartResponse(HttpStatus.OK.name().toString(), "Successfully deleted product from cart"));
+    }
+
+    @Override
+    public ResponseEntity<CartResponse> clearCart() {
+        redisTemplate.delete(CART_ITEM);
+        return ResponseEntity.ok(new CartResponse(HttpStatus.OK.name().toString(), "Successfully clear cart"));
     }
 }
