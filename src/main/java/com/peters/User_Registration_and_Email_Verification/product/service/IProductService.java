@@ -31,4 +31,6 @@ public interface IProductService {
 
     ResponseEntity<CartResponse> clearCart();
 
+    ResponseEntity<?> checkout(Long userId);
+
 }

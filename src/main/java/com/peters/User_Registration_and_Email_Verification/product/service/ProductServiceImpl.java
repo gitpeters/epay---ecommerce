@@ -1,17 +1,23 @@
 package com.peters.User_Registration_and_Email_Verification.product.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.peters.User_Registration_and_Email_Verification.exception.DuplicateException;
 import com.peters.User_Registration_and_Email_Verification.exception.ProductNotFoundException;
 import com.peters.User_Registration_and_Email_Verification.product.dto.CartResponse;
+import com.peters.User_Registration_and_Email_Verification.product.dto.OrderResponse;
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductRequestDto;
 import com.peters.User_Registration_and_Email_Verification.product.dto.ProductResponseDto;
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductCategory;
+import com.peters.User_Registration_and_Email_Verification.product.entity.ProductOrder;
+import com.peters.User_Registration_and_Email_Verification.product.repository.IProductOrderRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductCategoryRepository;
 import com.peters.User_Registration_and_Email_Verification.product.repository.ProductImageRepository;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
+import com.peters.User_Registration_and_Email_Verification.user.entity.UserAddress;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
+import com.peters.User_Registration_and_Email_Verification.user.repository.IUserAddressRepository;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,13 +43,15 @@ public class ProductServiceImpl implements IProductService{
     private final IUserRepository userRepository;
     private final ICategoryService categoryService;
     private final ProductImageService productImageService;
+    private final IUserAddressRepository addressRepository;
+    private final IProductOrderRepository orderRepository;
     private final HashOperations<String, String, Object> hashOperations;
 
     private final RedisTemplate redisTemplate;
 
     private static final String PRODUCT_CACHE = "products";
     private static final String CART_ITEM = "cart";
-
+    private static final String ORDER_CACHE = "order";
     @Override
     public ResponseEntity<CustomResponse> getAllProducts(){
         List<Product> products = productRepository.findAll();
@@ -283,6 +291,58 @@ public class ProductServiceImpl implements IProductService{
     public ResponseEntity<CartResponse> clearCart() {
         redisTemplate.delete(CART_ITEM);
         return ResponseEntity.ok(new CartResponse(HttpStatus.OK.name().toString(), "Successfully clear cart"));
+    }
+
+    @Override
+    public ResponseEntity<?> checkout(Long userId) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "No user found!"));
+        }
+        UserEntity user = userOpt.get();
+
+        if (!user.isEnabled()) {
+            return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "Your account is locked. Kindly proceed to your email to complete your registration"));
+        }
+
+        Optional<UserAddress> address = addressRepository.findByUser(user);
+        if (!address.isPresent() || address.isEmpty()) {
+            return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "Kindly add destination address and phone number"));
+        }
+
+        List<Object> cartItems = redisTemplate.opsForHash().values(CART_ITEM);
+        List<CartResponse> carts = new ArrayList<>();
+
+        ObjectMapper mapper = new ObjectMapper();
+        for (Object cartItem : cartItems) {
+            CartResponse cart = mapper.convertValue(cartItem, CartResponse.class);
+            carts.add(cart);
+        }
+
+        if (!carts.isEmpty()) {
+            double totalAmount = 0.0;
+
+            for (CartResponse cart : carts) {
+                totalAmount += cart.getSubtotal();
+            }
+
+            ProductOrder order = ProductOrder.builder()
+                    .totalAmount(totalAmount)
+                    .products(carts)
+                    .user(user)
+                    .build();
+            OrderResponse response = OrderResponse.builder()
+                    .totalAmount(totalAmount)
+                    .products(carts)
+                    .build();
+            //store to cache
+            redisTemplate.opsForHash().put(ORDER_CACHE, user.getId().toString(), response);
+
+            orderRepository.save(order);
+            redisTemplate.delete(CART_ITEM);
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, response, "Successfully placed order"));
+        }
+        return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "Your cart is empty. Kindly add some products to your cart to continue."));
     }
 
 }

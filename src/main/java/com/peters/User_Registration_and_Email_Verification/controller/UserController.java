@@ -74,4 +74,9 @@ public class UserController {
     public ResponseEntity<CustomResponse> addAddress(@PathVariable Long userId, UserAddressRequest request){
         return userService.addAddress(userId, request);
     }
+
+    @PostMapping("/{userId}/checkout")
+    public ResponseEntity<?> checkout(@PathVariable Long userId){
+        return productService.checkout(userId);
+    }
 }
