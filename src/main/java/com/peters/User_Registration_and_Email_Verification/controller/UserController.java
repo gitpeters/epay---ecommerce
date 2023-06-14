@@ -1,10 +1,10 @@
 package com.peters.User_Registration_and_Email_Verification.controller;
 
 import com.peters.User_Registration_and_Email_Verification.product.dto.CartResponse;
-import com.peters.User_Registration_and_Email_Verification.product.service.ICategoryService;
 import com.peters.User_Registration_and_Email_Verification.product.service.IProductService;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import com.peters.User_Registration_and_Email_Verification.user.dto.LoginRequestDto;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.service.IUserService;
 import com.peters.User_Registration_and_Email_Verification.user.service.UserAuthenticationService;
@@ -68,5 +68,10 @@ public class UserController {
     @DeleteMapping("/clear-cart")
     public ResponseEntity<CartResponse> clearCart(){
         return productService.clearCart();
+    }
+
+    @PostMapping("/{userId}/add-address")
+    public ResponseEntity<CustomResponse> addAddress(@PathVariable Long userId, UserAddressRequest request){
+        return userService.addAddress(userId, request);
     }
 }

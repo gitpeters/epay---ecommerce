@@ -1,9 +1,13 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
+import com.peters.User_Registration_and_Email_Verification.exception.UserNotFoundException;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
+import com.peters.User_Registration_and_Email_Verification.user.entity.UserAddress;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.user.entity.VerificationToken;
 import com.peters.User_Registration_and_Email_Verification.event.RegistrationCompletePublisher;
+import com.peters.User_Registration_and_Email_Verification.user.repository.IUserAddressRepository;
 import com.peters.User_Registration_and_Email_Verification.user.repository.IVerificationTokenRepository;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
@@ -35,6 +39,7 @@ public class UserService implements IUserService{
     private final PasswordEncoder passwordEncoder;
     private final IVerificationTokenRepository tokenRepository;
     private final EmailService emailService;
+    private final IUserAddressRepository addressRepository;
 
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
@@ -197,6 +202,43 @@ public class UserService implements IUserService{
 
         return new CustomResponse(HttpStatus.OK, "Valid");
 
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> addAddress(Long userId, UserAddressRequest request) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(!userOpt.isPresent()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "User not found"));
+        }
+
+        if(request.getPhoneNumber()==null || request.getPhoneNumber().isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Phone number is required"));
+        }
+        if(request.getStreet()==null || request.getStreet().isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Street is required"));
+        }
+        if(request.getCity()==null || request.getCity().isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "City is required"));
+        }
+        if(request.getState()==null || request.getState().isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "State is required"));
+        }
+        if(request.getCountry()==null || request.getCountry().isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Country is required"));
+        }
+
+        UserEntity user = userOpt.get();
+
+        UserAddress address = UserAddress.builder()
+                .city(request.getCity())
+                .street(request.getStreet())
+                .phoneNumber(request.getPhoneNumber())
+                .user(user)
+                .state(request.getState())
+                .country(request.getCountry())
+                .build();
+        addressRepository.save(address);
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successful"));
     }
 
     public static boolean validateEmail(String email) {

@@ -30,4 +30,5 @@ public interface IProductService {
     ResponseEntity<CartResponse> deleteProductFromCart(Long productId);
 
     ResponseEntity<CartResponse> clearCart();
+
 }

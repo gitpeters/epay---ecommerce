@@ -284,4 +284,5 @@ public class ProductServiceImpl implements IProductService{
         redisTemplate.delete(CART_ITEM);
         return ResponseEntity.ok(new CartResponse(HttpStatus.OK.name().toString(), "Successfully clear cart"));
     }
+
 }

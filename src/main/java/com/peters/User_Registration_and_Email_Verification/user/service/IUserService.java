@@ -1,5 +1,6 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
@@ -21,4 +22,5 @@ public interface IUserService {
 
     ResponseEntity<?> resendVerificationTokenEmail(String oldToken)throws MessagingException, UnsupportedEncodingException;
 
+    ResponseEntity<CustomResponse> addAddress(Long userId, UserAddressRequest request);
 }
