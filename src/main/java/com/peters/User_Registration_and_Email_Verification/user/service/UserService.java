@@ -411,6 +411,17 @@ public class UserService implements IUserService{
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Error occurred while uploading profile"));
     }
 
+    @Override
+    public ResponseEntity<CustomResponse> fetchProfilePicture(Long userId) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
+        }
+
+        UserEntity user = userOpt.get();
+        return null;
+    }
+
     public static boolean validateEmail(String email) {
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();

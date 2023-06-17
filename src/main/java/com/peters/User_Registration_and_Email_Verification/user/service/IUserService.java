@@ -36,4 +36,6 @@ public interface IUserService {
     ResponseEntity<CustomResponse> changePassword(ChangePasswordDTO request);
 
     ResponseEntity<CustomResponse> uploadProfilePicture(Long userId, MultipartFile file) throws IOException;
+
+    ResponseEntity<CustomResponse> fetchProfilePicture(Long userId);
 }

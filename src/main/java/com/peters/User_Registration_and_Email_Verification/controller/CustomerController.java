@@ -47,7 +47,7 @@ public class CustomerController {
     }
 
     @PostMapping("/{userId}/upload-profle")
-    public ResponseEntity<CustomResponse> uploadProfile(@PathVariable Long userId, MultipartFile profile) throws IOException {
+    public ResponseEntity<CustomResponse> uploadProfile(@PathVariable Long userId, @RequestParam("profile-image")MultipartFile profile) throws IOException {
         return userService.uploadProfilePicture(userId, profile);
     }
 }
