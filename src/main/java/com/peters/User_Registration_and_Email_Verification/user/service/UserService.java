@@ -417,9 +417,11 @@ public class UserService implements IUserService{
         if(userOpt.isEmpty()){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
         }
-
         UserEntity user = userOpt.get();
-        return null;
+        ProfileAvatar avatar = profileRepository.findByUser(user).get();
+        ProfileAvatarResponse response = ProfileAvatarResponse.builder()
+                .imagePath(avatar.getImagePath()).build();
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Successful"));
     }
 
     public static boolean validateEmail(String email) {

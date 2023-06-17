@@ -50,4 +50,9 @@ public class CustomerController {
     public ResponseEntity<CustomResponse> uploadProfile(@PathVariable Long userId, @RequestParam("profile-image")MultipartFile profile) throws IOException {
         return userService.uploadProfilePicture(userId, profile);
     }
+
+    @GetMapping("/{userId}/profle-picture")
+    public ResponseEntity<CustomResponse> fetchProfile(@PathVariable Long userId){
+        return userService.fetchProfilePicture(userId);
+    }
 }
