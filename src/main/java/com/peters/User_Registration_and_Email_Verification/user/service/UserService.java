@@ -1,29 +1,32 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.exception.UserNotFoundException;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
-import com.peters.User_Registration_and_Email_Verification.user.entity.UserAddress;
-import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
-import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
-import com.peters.User_Registration_and_Email_Verification.user.entity.VerificationToken;
+import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
+import com.peters.User_Registration_and_Email_Verification.product.entity.ProductOrder;
+import com.peters.User_Registration_and_Email_Verification.product.repository.IProductOrderRepository;
+import com.peters.User_Registration_and_Email_Verification.product.repository.IProductRepository;
+import com.peters.User_Registration_and_Email_Verification.product.service.ProductImageService;
+import com.peters.User_Registration_and_Email_Verification.user.dto.*;
+import com.peters.User_Registration_and_Email_Verification.user.entity.*;
 import com.peters.User_Registration_and_Email_Verification.event.RegistrationCompletePublisher;
-import com.peters.User_Registration_and_Email_Verification.user.repository.IUserAddressRepository;
-import com.peters.User_Registration_and_Email_Verification.user.repository.IVerificationTokenRepository;
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserResponseDto;
-import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
-import com.peters.User_Registration_and_Email_Verification.user.repository.RoleRepository;
+import com.peters.User_Registration_and_Email_Verification.user.repository.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -40,14 +43,20 @@ public class UserService implements IUserService{
     private final IVerificationTokenRepository tokenRepository;
     private final EmailService emailService;
     private final IUserAddressRepository addressRepository;
-
+    private final IRoleService roleService;
+    private final ApplicationEventPublisher publisher;
+    private final HttpServletRequest servletRequest;
+    private final RoleRepository roleRepository;
+    private final IProductOrderRepository productOrderRepository;
+    private final IProductRepository productRepository;
+    private final ProductImageService productImageService;
+    private final IProfileAvatarRepository profileRepository;
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
 
-    private final ApplicationEventPublisher publisher;
+    private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/user_profile/";
 
-    private final HttpServletRequest servletRequest;
-    private final RoleRepository roleRepository;
+
     @Override
     public ResponseEntity<CustomResponse> getAllUsers() {
         List<UserEntity> users = userRepository.findAll();
@@ -55,7 +64,7 @@ public class UserService implements IUserService{
                 .map(user -> mapToUserResponse(user)).collect(Collectors.toList());
 
         CustomResponse successResponse = CustomResponse.builder()
-                .status(HttpStatus.OK)
+                .status(HttpStatus.OK.name())
                 .message("Successful")
                 .data(userResponseList.isEmpty() ? null : userResponseList)
                 .build();
@@ -84,6 +93,12 @@ public class UserService implements IUserService{
         if(request == null){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Request body is required"));
         }
+        if(request.getFirstName() == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "firstName is required"));
+        }
+        if(request.getLastName() == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "lastName is required"));
+        }
         if(request.getEmail() == null){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
         }
@@ -93,12 +108,7 @@ public class UserService implements IUserService{
         if(request.getPassword() == null){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "password is required"));
         }
-        if(request.getFirstName() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "firstName is required"));
-        }
-        if(request.getLastName() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "lastName is required"));
-        }
+
         UserRole role = roleRepository.findByName("ROLE_USER").get();
         UserEntity newUser = UserEntity.builder()
                 .email(request.getEmail())
@@ -133,7 +143,96 @@ public class UserService implements IUserService{
                 .role(new HashSet<>(user.getRoles()))
                 .isEnabled(user.isEnabled())
                 .build();
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, Arrays.asList(response), "Successful"));
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Successful"));
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> fetchUserById(Long userId) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
+        }
+        UserEntity user = userOpt.get();
+        UserResponseDto response = UserResponseDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(new HashSet<>(user.getRoles()))
+                .isEnabled(user.isEnabled())
+                .build();
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Successful"));
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> updateProfile(Long userId, UserRequestDto request) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
+        }
+        if(request.getEmail() != null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "We're sorry, but you cannot change your email address"));
+        }
+
+        if(request.getPassword() != null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "We're sorry, but you cannot change your password in this channel"));
+        }
+        UserEntity existingUser = userOpt.get();
+        // Perform the partial update
+        BeanUtils.copyProperties(request, existingUser, getNullPropertyNames(request));
+
+        UserEntity updatedUser = userRepository.save(existingUser);
+
+        if(updatedUser != null){
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), request, "Successfully updated profile"));
+        }
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong"));
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> deleteProfile(Long userId) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
+        }
+
+        UserEntity existingUser = userOpt.get();
+
+        List<UserRole> roles = roleRepository.findByUsers(existingUser);
+
+        for(UserRole role: roles){
+            roleService.removeAllUserFromRole(role.getId());
+        }
+
+        // delete user from verification table
+        Optional<VerificationToken> verificationUser = tokenRepository.findByUser(existingUser);
+        if(verificationUser.isPresent()){
+            tokenRepository.delete(verificationUser.get());
+        }
+        // delete user from order table
+        Optional<ProductOrder> deleteOrder = productOrderRepository.findByUser(userOpt.get());
+       if(deleteOrder.isPresent()){
+           productOrderRepository.delete(deleteOrder.get());
+       }
+
+       Optional<UserAddress> deleteUserAddress = addressRepository.findByUser(userOpt.get());
+       if(deleteUserAddress.isPresent()){
+           addressRepository.delete(deleteUserAddress.get());
+       }
+
+       List<Product> deleteProduct = productRepository.findByUsers(userOpt.get());
+       if(!deleteProduct.isEmpty()){
+           for (Product product :
+                   deleteProduct) {
+               productImageService.deleteImagesByProductId(product);
+               productRepository.delete(product);
+           }
+       }
+
+
+
+        userRepository.delete(existingUser);
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successfully deleted profile"));
     }
 
     @Override
@@ -177,7 +276,7 @@ public class UserService implements IUserService{
 
         VerificationToken theToken = generateNewVerificationToken(token);
         UserEntity user = theToken.getUser();
-        String url = applicationUrl(servletRequest)+"/api/v1/register/verify-email?token="+theToken.getToken();
+        String url = applicationUrl(servletRequest)+"/api/v1/user/verify-email?token="+theToken.getToken();
 
         emailService.sendVerificationEmail(url, user);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "New verification link has been sent to your email and it will expire in 1min. Kindly check your email to activate your account"));
@@ -201,7 +300,37 @@ public class UserService implements IUserService{
         userRepository.save(user);
 
         return new CustomResponse(HttpStatus.OK, "Valid");
+    }
 
+    @Override
+    public ResponseEntity<CustomResponse> changePassword(ChangePasswordDTO request) {
+        if(request.getEmail() == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
+        }
+        if(!validateEmail(request.getEmail())){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "provide correct email format"));
+        }
+        if(request.getOldPassword() == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "oldPassword is required"));
+        }
+        if(request.getNewPassword() == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "newPassword is required"));
+        }
+        Optional<UserEntity> userOpt = userRepository.findUserByEmail(request.getEmail());
+
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user is associated with this email"));
+        }
+
+        UserEntity user = userOpt.get();
+        if(!passwordEncoder.matches(request.getOldPassword(), user.getPassword())){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Old password is not correct. Try again"));
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Password has been successfully changed"));
     }
 
     @Override
@@ -241,10 +370,65 @@ public class UserService implements IUserService{
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successful"));
     }
 
+    @Override
+    public ResponseEntity<CustomResponse> uploadProfilePicture(Long userId, MultipartFile file) throws IOException {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No user found"));
+        }
+        if(file.getSize() > 1048576){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Cannot upload file size that is more than 1mb"));
+        }
+
+        // Check the file extension
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+        List<String> supportedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+        if (!supportedExtensions.contains(fileExtension)) {
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Invalid image file format! Supported formats: JPG, JPEG, PNG, GIF"));
+        }
+        UserEntity user = userOpt.get();
+
+        String profileName = user.getFirstName()+"_avatar"+user.getId();
+        String fileName = profileName + "." + fileExtension;
+
+        BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
+        if (bufferedImage == null) {
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Invalid image file!"));
+        }
+        String imagePath = IMAGE_FOLDER + fileName;
+        ProfileAvatar profileAvater = ProfileAvatar.builder()
+                .name(file.getOriginalFilename())
+                .type(file.getContentType())
+                .imagePath(imagePath)
+                .user(user)
+                .build();
+        profileRepository.save(profileAvater);
+        ImageIO.write(bufferedImage, fileExtension, new File(imagePath));
+        if(profileAvater!=null){
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successfully uploaded profile picture"));
+        }
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Error occurred while uploading profile"));
+    }
+
     public static boolean validateEmail(String email) {
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
 
+    private static String[] getNullPropertyNames(Object source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> emptyNames = new HashSet<>();
+        for (java.beans.PropertyDescriptor pd : pds) {
+            Object srcValue = src.getPropertyValue(pd.getName());
+            if (srcValue == null) {
+                emptyNames.add(pd.getName());
+            }
+        }
+        String[] result = new String[emptyNames.size()];
+        return emptyNames.toArray(result);
+    }
 
 }

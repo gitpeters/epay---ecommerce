@@ -8,6 +8,7 @@ import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressR
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
 import com.peters.User_Registration_and_Email_Verification.user.service.IUserService;
 import com.peters.User_Registration_and_Email_Verification.user.service.UserAuthenticationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/user")
 @RequiredArgsConstructor
+@Tag(name = "user")
 public class UserController {
     private final IUserService userService;
     private final UserAuthenticationService authenticationService;
@@ -75,8 +77,4 @@ public class UserController {
         return userService.addAddress(userId, request);
     }
 
-    @PostMapping("/{userId}/checkout")
-    public ResponseEntity<?> checkout(@PathVariable Long userId){
-        return productService.checkout(userId);
-    }
 }

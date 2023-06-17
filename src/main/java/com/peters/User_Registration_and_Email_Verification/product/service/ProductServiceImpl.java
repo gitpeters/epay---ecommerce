@@ -56,7 +56,7 @@ public class ProductServiceImpl implements IProductService{
     public ResponseEntity<CustomResponse> getAllProducts(){
         List<Product> products = productRepository.findAll();
         List<ProductResponseDto> responseDtoList=  products.stream().map((this::mappedToProductResponse)).collect(Collectors.toList());
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, Arrays.asList(responseDtoList), "Successful"));
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), Arrays.asList(responseDtoList), "Successful"));
     }
 
 
@@ -104,7 +104,7 @@ public class ProductServiceImpl implements IProductService{
             List<ProductResponseDto> responseDto = products.stream()
                     .map(this::mappedToProductResponse)
                     .collect(Collectors.toList());
-            CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDto, "Successful");
+            CustomResponse customResponse = new CustomResponse(HttpStatus.OK.name(), responseDto, "Successful");
             hashOperations.put(PRODUCT_CACHE, name, customResponse);
             return ResponseEntity.ok(customResponse);
 
@@ -131,7 +131,7 @@ public class ProductServiceImpl implements IProductService{
                 .categories(productOpt.get().getCategory().stream().toList())
                 .productImagePath(imagePaths)
                 .build();
-        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDto, "Successful");
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK.name(), responseDto, "Successful");
         hashOperations.put(PRODUCT_CACHE, productId.toString(), customResponse);
         return ResponseEntity.ok(customResponse);
     }
@@ -148,7 +148,7 @@ public class ProductServiceImpl implements IProductService{
                 .stream()
                 .map((this::mappedToProductResponse))
                 .collect(Collectors.toList());
-        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDtoList, "Successful");
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK.name(), responseDtoList, "Successful");
         hashOperations.put(PRODUCT_CACHE, categoryName, customResponse);
         return ResponseEntity.ok(customResponse);
     }
@@ -167,7 +167,7 @@ public class ProductServiceImpl implements IProductService{
         List<ProductResponseDto> responseDtoList = products.stream()
                 .map((this::mappedToProductResponse))
                 .collect(Collectors.toList());
-        CustomResponse customResponse = new CustomResponse(HttpStatus.OK, responseDtoList, "Successfully");
+        CustomResponse customResponse = new CustomResponse(HttpStatus.OK.name(), responseDtoList, "Successfully");
         hashOperations.put(PRODUCT_CACHE, cacheKey, customResponse);
         return ResponseEntity.ok(customResponse);
     }
@@ -198,7 +198,7 @@ public class ProductServiceImpl implements IProductService{
     public ResponseEntity<CustomResponse> UpdateProduct(Long productId, ProductRequestDto requestDto) {
         Product existingProduct = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException("Product not found"));
         if (existingProduct == null) {
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No product found!"));
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST.name(), "error","No product found!"));
         }
 
         // Perform the partial update
@@ -209,7 +209,7 @@ public class ProductServiceImpl implements IProductService{
 
         // Return the response
         if (updatedProduct != null) {
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, updatedProduct,"Successfully updated product"));
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), updatedProduct,"Successfully updated product"));
         }
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong! Could not update product"));
     }
@@ -340,7 +340,7 @@ public class ProductServiceImpl implements IProductService{
 
             orderRepository.save(order);
             redisTemplate.delete(CART_ITEM);
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, response, "Successfully placed order"));
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Successfully placed order"));
         }
         return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "Your cart is empty. Kindly add some products to your cart to continue."));
     }

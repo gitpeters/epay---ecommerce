@@ -6,6 +6,7 @@ import com.peters.User_Registration_and_Email_Verification.product.service.ICate
 import com.peters.User_Registration_and_Email_Verification.product.service.IProductService;
 import com.peters.User_Registration_and_Email_Verification.product.service.ProductImageService;
 import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/product")
 @RequiredArgsConstructor
+@Tag(name = "product")
 public class ProductController {
     private final IProductService productService;
     private final ProductImageService imageService;

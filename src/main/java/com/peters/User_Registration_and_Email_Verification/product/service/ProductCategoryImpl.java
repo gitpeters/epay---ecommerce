@@ -59,7 +59,7 @@ public class ProductCategoryImpl implements ICategoryService{
         if(category.isPresent() && category.get().getProducts().contains(product.get())){
             category.get().removeProductFromCategory(product.get());
             categoryRepository.save(category.get());
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, product.get(), "Successfully removed product from category"));
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), product.get(), "Successfully removed product from category"));
         }
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.NOT_FOUND, "No product found"));
     }
@@ -73,7 +73,7 @@ public class ProductCategoryImpl implements ICategoryService{
         }
         category.ifPresent(assignRole -> assignRole.assignProductToCategory(product.get()));
         categoryRepository.save(category.get());
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, category.get(), "Successful"));
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), category.get(), "Successful"));
     }
 
     @Override

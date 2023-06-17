@@ -38,6 +38,11 @@ public class WebSecurityConfig {
 
     };
 
+    private static final String[] CUSTOMER_SECURED_URL = {
+            "/api/v1/customer/**"
+
+    };
+
     private static final String[] VENDOR_SECURED_URL = {
             "/api/v1/product/**"
 
@@ -49,6 +54,7 @@ public class WebSecurityConfig {
                         .requestMatchers(UN_SECURED_URL).permitAll()
                         .requestMatchers(ADMIN_SECURED_URL).hasRole("ADMIN")
                         .requestMatchers(VENDOR_SECURED_URL).hasRole("VENDOR")
+                        .requestMatchers(CUSTOMER_SECURED_URL).hasRole("USER")
                         .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                 )
                 .csrf().disable()

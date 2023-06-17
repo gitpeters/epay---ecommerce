@@ -24,7 +24,7 @@ public class ControllerAdvice {
     @ExceptionHandler(DuplicateException.class)
     public ResponseEntity<CustomResponse> handleDuplicateException(DuplicateException e) {
         HttpStatus status = HttpStatus.CONFLICT;
-        CustomResponse response = new CustomResponse(HttpStatus.BAD_REQUEST,
+        CustomResponse response = new CustomResponse(HttpStatus.BAD_REQUEST.name(),
                 messageSource.getMessage("duplicate.product.message", e.getArgs(),
                         LocaleContextHolder.getLocale()), null);
         return ResponseEntity.status(status).body(response);
@@ -61,7 +61,7 @@ public class ControllerAdvice {
     public ResponseEntity<CustomResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error(ex.getMessage());
         CustomResponse errorResponse = CustomResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
                 .message(ex.getLocalizedMessage())
                 .build();
 

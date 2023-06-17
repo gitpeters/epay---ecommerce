@@ -41,7 +41,7 @@ public class UserAuthenticationService {
                 .email(user.getEmail())
                 .isEnabled(user.isEnabled())
                 .build();
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, response, "Successful"));
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Login successfully"));
     }
 
     // authenticate user
