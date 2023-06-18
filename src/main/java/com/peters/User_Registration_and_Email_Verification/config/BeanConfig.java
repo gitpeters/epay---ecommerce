@@ -6,9 +6,7 @@ import com.peters.User_Registration_and_Email_Verification.user.repository.IUser
 import com.peters.User_Registration_and_Email_Verification.user.repository.RoleRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +16,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.util.Collections;
+
+
 
 @Configuration
 
@@ -63,7 +66,7 @@ public class BeanConfig {
     }
 
     @Bean
-    public RestTemplate getRestTemplate() {
+    public RestTemplate getRestTemplate() throws Exception {
         return new RestTemplate();
     }
 

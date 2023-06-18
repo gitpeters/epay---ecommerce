@@ -27,7 +27,7 @@ public class PaymentService implements IPaymentService{
     private final IPaymentRepository paymentRepository;
     private final RestTemplateService restTemplate;
     @Value("${paystack.secret-key}")
-    private static String SECRET_KEY;
+    private String SECRET_KEY;
     @Value("${paystack.base-url}")
     private String baseUrl;
     @Override
@@ -58,6 +58,7 @@ public class PaymentService implements IPaymentService{
             Payment payment = Payment.builder()
                     .order(order)
                     .status(PaymentStatus.PENDING.name())
+                    .amount(order.getTotalAmount())
                     .paymentReference((String) mapResponse.get("reference"))
                     .paymentAccessCode((String) mapResponse.get("access_code"))
                     .build();
@@ -77,7 +78,7 @@ public class PaymentService implements IPaymentService{
     private HttpHeaders headers() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer "+SECRET_KEY);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Content-type", "application/json");
 
         return headers;
     }
