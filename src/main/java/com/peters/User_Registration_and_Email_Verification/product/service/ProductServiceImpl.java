@@ -326,9 +326,12 @@ public class ProductServiceImpl implements IProductService{
                 totalAmount += cart.getSubtotal();
             }
 
+            String orderReference = UUID.randomUUID().toString();
+
             ProductOrder order = ProductOrder.builder()
                     .totalAmount(totalAmount)
                     .products(carts)
+                    .reference(orderReference)
                     .user(user)
                     .build();
             OrderResponse response = OrderResponse.builder()

@@ -35,5 +35,6 @@ spring:
           starttls:
             enable: true
 
-image:
-  path: src/main/resources/product_images/
+paystack:
+  secret-key: sk_test_03487c78f5c63bb483e06bbfc634b8f2eab2b665
+  base-url: https://api.paystack.co/

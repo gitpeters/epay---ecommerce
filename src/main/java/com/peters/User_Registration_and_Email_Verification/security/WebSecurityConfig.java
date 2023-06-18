@@ -39,7 +39,8 @@ public class WebSecurityConfig {
     };
 
     private static final String[] CUSTOMER_SECURED_URL = {
-            "/api/v1/customer/**"
+            "/api/v1/customer/**",
+            "/api/v1/payment/**"
 
     };
 

@@ -19,8 +19,9 @@ public class ProductOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String reference = UUID.randomUUID().toString();
+    private String reference;
     private double totalAmount;
+    private String status;
     @Transient
     private List<CartResponse> products;
     @ManyToOne(fetch = FetchType.EAGER)

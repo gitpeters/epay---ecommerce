@@ -51,8 +51,9 @@ public class CustomerController {
         return userService.uploadProfilePicture(userId, profile);
     }
 
-    @GetMapping("/{userId}/profle-picture")
+    @GetMapping("/{userId}/profile-picture")
     public ResponseEntity<CustomResponse> fetchProfile(@PathVariable Long userId){
         return userService.fetchProfilePicture(userId);
     }
+
 }

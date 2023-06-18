@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface IProductOrderRepository extends JpaRepository<ProductOrder, Long> {
     Optional<ProductOrder> findByUser(UserEntity user);
+
+    Optional<ProductOrder> findByReference(String orderReference);
 }
