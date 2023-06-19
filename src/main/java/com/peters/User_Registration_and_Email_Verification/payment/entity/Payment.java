@@ -19,19 +19,15 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private double amount;
+    private Double amount;
     private String status;
+    private String paymentChannel;
     private String paymentReference;
     private String paymentAccessCode;
     @OneToOne
     @JoinColumn(name = "order_id")
     private ProductOrder order;
-    private Timestamp transactionDate;
-
-    @PrePersist
-    public void prePersist() {
-        transactionDate = Timestamp.from(Calendar.getInstance().toInstant());
-    }
+    private String transactionDate;
 }
 
 

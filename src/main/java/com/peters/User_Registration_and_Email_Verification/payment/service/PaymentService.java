@@ -2,6 +2,7 @@ package com.peters.User_Registration_and_Email_Verification.payment.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.peters.User_Registration_and_Email_Verification.config.RestTemplateService;
+import com.peters.User_Registration_and_Email_Verification.payment.dto.PaymentResponse;
 import com.peters.User_Registration_and_Email_Verification.payment.dto.PaymentStatus;
 import com.peters.User_Registration_and_Email_Verification.payment.entity.Payment;
 import com.peters.User_Registration_and_Email_Verification.payment.repository.IPaymentRepository;
@@ -12,10 +13,10 @@ import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntit
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,8 +46,10 @@ public class PaymentService implements IPaymentService{
         //get user from product order
         UserEntity user = order.getUser();
 
+        double amountToBePaid = order.getTotalAmount() * 1;
+
         request.put("email", user.getEmail());
-        request.put("amount", String.valueOf(order.getTotalAmount()));
+        request.put("amount", String.valueOf(amountToBePaid));
 
         String url = baseUrl +"transaction/initialize";
 
@@ -58,18 +61,57 @@ public class PaymentService implements IPaymentService{
             Payment payment = Payment.builder()
                     .order(order)
                     .status(PaymentStatus.PENDING.name())
-                    .amount(order.getTotalAmount())
                     .paymentReference((String) mapResponse.get("reference"))
                     .paymentAccessCode((String) mapResponse.get("access_code"))
                     .build();
             paymentRepository.save(payment);
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, (String) mapResponse.get("authorization_url")));
+
+            PaymentResponse paymentResponse = PaymentResponse.builder()
+                    .authorization_url((String) mapResponse.get("authorization_url")).build();
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), paymentResponse, "Authorization URL created"));
         }
 
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong"));
     }
 
-//    @Async
+    @Override
+    public ResponseEntity<CustomResponse> verifyPayment(String orderReference) {
+        Optional<ProductOrder> orderOpt = orderRepository.findByReference(orderReference);
+        if(orderOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No order for this reference found"));
+        }
+        ProductOrder order = orderOpt.get();
+        Optional<Payment> paymentOpt = paymentRepository.findByOrder(order);
+        if(paymentOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No payment associated with this order"));
+        }
+
+        Payment payment = paymentOpt.get();
+        String url = baseUrl + "transaction/verify/"+payment.getPaymentReference();
+
+
+
+        ResponseEntity<CustomResponse> response = restTemplate.get(url, this.headers());
+        if(response.getStatusCode() == HttpStatus.OK){
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> mapResponse = objectMapper.convertValue(response.getBody().getData(), Map.class);
+            int amount = (Integer) mapResponse.get("amount");
+            payment.setAmount((double) amount);
+            payment.setPaymentChannel((String) mapResponse.get("channel"));
+            payment.setStatus(PaymentStatus.PAID.name());
+            payment.setTransactionDate((String) mapResponse.get("paid_at"));
+            paymentRepository.save(payment);
+            order.setStatus("Purchased");
+            orderRepository.save(order);
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), payment, "Payment verified successfully"));
+        }
+        payment.setStatus(PaymentStatus.FAILED.name());
+        paymentRepository.save(payment);
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Payment failed"));
+    }
+
+
+    //    @Async
 //    private ResponseEntity<CustomResponse> processPayment(Map<String, String> request, ProductOrder order) {
 //
 //        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong!"));
