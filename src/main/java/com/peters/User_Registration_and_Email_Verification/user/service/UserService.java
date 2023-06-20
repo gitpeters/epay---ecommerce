@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -149,6 +150,7 @@ public class UserService implements IUserService{
         Integer token = theToken();
         emailService.sendResetPasswordEmail(token, user);
         redisTemplate.opsForHash().put(PASSWORD_RESET,email,token);
+        redisTemplate.expire(PASSWORD_RESET, 5, TimeUnit.MINUTES);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Kindly proceed to "+email+" to confirm your password reset"));
     }
 
@@ -156,6 +158,13 @@ public class UserService implements IUserService{
     public ResponseEntity<CustomResponse> confirmResetPassword(Integer token, ResetPasswordDto request) {
         Integer theToken = (Integer) redisTemplate.opsForHash().get(PASSWORD_RESET, request.getEmail());
         if(theToken != null && theToken.equals(token)){
+
+            Long expirationTime = redisTemplate.getExpire(PASSWORD_RESET, TimeUnit.MINUTES);
+
+            if (expirationTime != null && expirationTime <= 0) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Token has expired"));
+            }
+
             if(request.getEmail() == null){
                 return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
             }
