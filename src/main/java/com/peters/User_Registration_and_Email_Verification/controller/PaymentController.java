@@ -19,8 +19,8 @@ public class PaymentController {
         return paymentService.initiatePayment(orderReference);
     }
 
-    @GetMapping("/verify-payment/{orderReference}")
-    public ResponseEntity<CustomResponse> verifyPayment(@PathVariable String orderReference){
+    @GetMapping("/verify-payment")
+    public ResponseEntity<CustomResponse> verifyPayment(@RequestParam(name = "orderReference") String orderReference){
         return paymentService.verifyPayment(orderReference);
     }
 }

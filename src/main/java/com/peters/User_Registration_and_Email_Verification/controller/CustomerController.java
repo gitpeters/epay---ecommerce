@@ -14,8 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("api/v1/customer")
-@Tag(name = "customer")
+@RequestMapping("api/v1/auth/user")
+@Tag(name = "Authenticated User")
 @RequiredArgsConstructor
 public class CustomerController {
     private final IUserService userService;
@@ -39,11 +39,6 @@ public class CustomerController {
     @DeleteMapping("/{userId}/profile")
     public ResponseEntity<CustomResponse> deleteProfile(@PathVariable("userId") Long userId){
         return userService.deleteProfile(userId);
-    }
-
-    @PostMapping("/{userId}/checkout")
-    public ResponseEntity<?> checkout(@PathVariable Long userId){
-        return productService.checkout(userId);
     }
 
     @PostMapping("/{userId}/upload-profle")

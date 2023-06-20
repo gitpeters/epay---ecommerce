@@ -24,6 +24,8 @@ public class UserController {
     private final UserAuthenticationService authenticationService;
     private final IProductService productService;
 
+
+    // user related endpoints
     @PostMapping
     public ResponseEntity<CustomResponse> register(@RequestBody UserRequestDto requestDto){
         return userService.registerUser(requestDto);
@@ -43,6 +45,23 @@ public class UserController {
     public ResponseEntity<CustomResponse> authenticateUser(@RequestBody @Validated LoginRequestDto loginRequest) throws Exception {
         return authenticationService.createAuthenticationTokenAndAuthenticateUser(loginRequest);
     }
+
+    @PostMapping("/{userId}/add-address")
+    public ResponseEntity<CustomResponse> addAddress(@PathVariable Long userId, UserAddressRequest request){
+        return userService.addAddress(userId, request);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<CustomResponse> resetPassword(@RequestParam(name = "email") String email) throws MessagingException, UnsupportedEncodingException {
+        return userService.resetPassword(email);
+    }
+
+    @PostMapping("/confirm-password-reset")
+    public ResponseEntity<CustomResponse> confirmResetPassword(@RequestParam(name = "token") Integer token, @RequestBody ResetPasswordDto request){
+        return userService.confirmResetPassword(token,request);
+    }
+
+    // product related endpoints
 
     @GetMapping("/products")
     public ResponseEntity<CustomResponse> getAllProducts(){
@@ -69,18 +88,18 @@ public class UserController {
         return productService.clearCart();
     }
 
-    @PostMapping("/{userId}/add-address")
-    public ResponseEntity<CustomResponse> addAddress(@PathVariable Long userId, UserAddressRequest request){
-        return userService.addAddress(userId, request);
+    @GetMapping("/product/filter-by-price")
+    public ResponseEntity<CustomResponse> getProductByPriceRange(@RequestParam("min-price") Double min, @RequestParam("max-price") Double max){
+        return productService.getProductByPriceRange(min, max);
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<CustomResponse> resetPassword(@RequestParam(name = "email") String email) throws MessagingException, UnsupportedEncodingException {
-        return userService.resetPassword(email);
+    @GetMapping("/products/by-category")
+    public ResponseEntity<CustomResponse> getProductsByCategory(@RequestParam(name = "categoryName") String category){
+        return productService.getProductByCategory(category);
     }
 
-    @PostMapping("/confirm-password-reset")
-    public ResponseEntity<CustomResponse> confirmResetPassword(@RequestParam(name = "token") Integer token, @RequestBody ResetPasswordDto request){
-        return userService.confirmResetPassword(token,request);
+    @GetMapping("/products/by-name")
+    public ResponseEntity<CustomResponse> getProductsByName(@RequestParam("productName") String productName){
+        return productService.getProductByName(productName);
     }
 }

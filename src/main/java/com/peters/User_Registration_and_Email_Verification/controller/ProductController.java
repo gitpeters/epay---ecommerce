@@ -28,19 +28,14 @@ public class ProductController {
         return imageService.addImageToProduct(file, productId);
     }
 
-    @PostMapping("/add-product/{userId}")
-    public ResponseEntity<CustomResponse> addProduct(@RequestBody ProductRequestDto request, @PathVariable("userId") Long userId) {
+    @PostMapping("/add-product")
+    public ResponseEntity<CustomResponse> addProduct(@RequestBody ProductRequestDto request, @RequestParam("userId") Long userId) {
         return productService.addProduct(request, userId);
     }
 
     @GetMapping
     public ResponseEntity<CustomResponse> getAllProducts(){
         return productService.getAllProducts();
-    }
-
-    @GetMapping("/filter-by-price")
-    public ResponseEntity<CustomResponse> getProductByPriceRange(@RequestParam("min-price") Double min, @RequestParam("max-price") Double max){
-        return productService.getProductByPriceRange(min, max);
     }
 
     @PostMapping("/assign-category")
@@ -52,18 +47,7 @@ public class ProductController {
     public ResponseEntity<List<ProductCategory>> getAllCategories(){
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
-
-    @GetMapping("/products-by-category/{categoryName}")
-    public ResponseEntity<CustomResponse> getProductsByCategory(@PathVariable("categoryName") String category){
-        return productService.getProductByCategory(category);
-    }
-
-    @GetMapping("/{productName}")
-    public ResponseEntity<CustomResponse> getProductsByName(@PathVariable("productName") String productName){
-        return productService.getProductByName(productName);
-    }
-
-    @GetMapping("/{id}/product")
+    @GetMapping("/{id}")
     public ResponseEntity<CustomResponse> getProductsById(@PathVariable("id") Long productId){
         return productService.getProductById(productId);
     }
@@ -78,6 +62,10 @@ public class ProductController {
         return productService.deleteProduct(productId);
     }
 
+    @PostMapping("/checkout")
+    public ResponseEntity<?> checkout(@RequestParam(name = "userId") Long userId){
+        return productService.checkout(userId);
+    }
 
 
 }

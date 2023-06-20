@@ -1,5 +1,7 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
+import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
+import com.peters.User_Registration_and_Email_Verification.user.dto.UserResponseDto;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
@@ -9,8 +11,11 @@ import com.peters.User_Registration_and_Email_Verification.exception.UserNotFoun
 import com.peters.User_Registration_and_Email_Verification.user.repository.IUserRepository;
 import com.peters.User_Registration_and_Email_Verification.user.repository.RoleRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,14 +30,15 @@ public class RoleService implements IRoleService{
     }
 
     @Override
-    public UserRole createRole(UserRoleRequestDto request) {
+    public ResponseEntity<CustomResponse> createRole(UserRoleRequestDto request) {
         Optional<UserRole> roleOpt = roleRepository.findByName(request.getName());
         if(roleOpt.isPresent()){
             throw new RoleAlreadyExistException(roleOpt.get().getName()+ " role already exist!");
         }
         UserRole role = UserRole.builder()
                 .name("ROLE_"+request.getName()).build();
-        return roleRepository.save(role);
+        roleRepository.save(role);
+        return ResponseEntity.ok().body(new CustomResponse(HttpStatus.CREATED.name(), request, "Successfully created role"));
     }
 
     @Override
@@ -42,8 +48,13 @@ public class RoleService implements IRoleService{
     }
 
     @Override
-    public UserRole findByName(String name) {
-        return roleRepository.findByName(name).get();
+    public ResponseEntity<CustomResponse> findByName(String name) {
+        Optional<UserRole> roleOpt =roleRepository.findByName(name);
+        if(roleOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No role found for this name"));
+        }
+
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), roleOpt.get(), "Successful"));
     }
 
     @Override
@@ -52,19 +63,19 @@ public class RoleService implements IRoleService{
     }
 
     @Override
-    public UserEntity removeUserFromRole(Long userId, Long roleId) {
+    public ResponseEntity<CustomResponse> removeUserFromRole(Long userId, Long roleId) {
         Optional<UserEntity> user = userRepository.findById(userId);
         Optional<UserRole> role = roleRepository.findById(userId);
         if(role.isPresent() && role.get().getUsers().contains(user.get())){
             role.get().removeUserFromRole(user.get());
             roleRepository.save(role.get());
-            return user.get();
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), role.get(), "Successfully removed user from role"));
         }
        throw new UserNotFoundException("User not found!");
     }
 
     @Override
-    public UserEntity assignUserToRole(Long userId, Long roleId) {
+    public ResponseEntity<CustomResponse> assignUserToRole(Long userId, Long roleId) {
         Optional<UserEntity> user = userRepository.findById(userId);
         Optional<UserRole> role = roleRepository.findById(roleId);
         if(user.isPresent() && user.get().getRoles().contains(role.get())){
@@ -72,13 +83,22 @@ public class RoleService implements IRoleService{
         }
         role.ifPresent(assignRole -> assignRole.assignUserToRole(user.get()));
         roleRepository.save(role.get());
-        return user.get();
+        UserResponseDto responseDto = UserResponseDto.builder()
+                .id(user.get().getId())
+                .email(user.get().getEmail())
+                .firstName(user.get().getFirstName())
+                .lastName(user.get().getLastName())
+                .isEnabled(user.get().isEnabled())
+                .role(Collections.singleton(role.get()))
+                .build();
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), responseDto, "Successfully assigned role to user"));
     }
 
     @Override
-    public UserRole removeAllUserFromRole(Long roleId) {
+    public ResponseEntity<CustomResponse> removeAllUserFromRole(Long roleId) {
         Optional<UserRole> roleOpt = roleRepository.findById(roleId);
         roleOpt.ifPresent(UserRole ::removeAllUsersFromRole);
-        return roleRepository.save(roleOpt.get());
+        roleRepository.save(roleOpt.get());
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), roleOpt.get(), "Successfully removed all roles from user"));
     }
 }

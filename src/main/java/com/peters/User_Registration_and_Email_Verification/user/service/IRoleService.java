@@ -1,25 +1,27 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
+import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserRole;
 import com.peters.User_Registration_and_Email_Verification.user.dto.UserRoleRequestDto;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface IRoleService {
     List<UserRole> getAllRoles();
 
-    UserRole createRole(UserRoleRequestDto request);
+    ResponseEntity<CustomResponse> createRole(UserRoleRequestDto request);
 
     void deleteRole(Long roleId);
 
-    UserRole findByName(String name);
+    ResponseEntity<CustomResponse> findByName(String name);
 
     UserRole findById(Long roleId);
 
-    UserEntity removeUserFromRole(Long userId, Long roleId);
+    ResponseEntity<CustomResponse> removeUserFromRole(Long userId, Long roleId);
 
-    UserEntity assignUserToRole(Long userId, Long roleId);
+    ResponseEntity<CustomResponse> assignUserToRole(Long userId, Long roleId);
 
-    UserRole removeAllUserFromRole(Long roleId);
+    ResponseEntity<CustomResponse> removeAllUserFromRole(Long roleId);
 }

@@ -83,22 +83,22 @@ public class AdminController {
             }
     )
     @PostMapping("/create-role")
-    public ResponseEntity<UserRole> createRole(@RequestBody UserRoleRequestDto request){
-        return ResponseEntity.ok(roleService.createRole(request));
+    public ResponseEntity<CustomResponse> createRole(@RequestBody UserRoleRequestDto request){
+        return roleService.createRole(request);
     }
 
     @PostMapping("/remove-all-users-from-role/{id}")
-    public UserRole removeUserAllUsersFromRole(@PathVariable("id") Long roleId){
+    public ResponseEntity<CustomResponse> removeUserAllUsersFromRole(@PathVariable("id") Long roleId){
         return roleService.removeAllUserFromRole(roleId);
     }
 
     @PostMapping("/remove-user-from-role")
-    public UserEntity removeSingleUserFromRole(@RequestParam(name = "userId") Long userId, @RequestParam(name = "roleId")Long roleId){
+    public ResponseEntity<CustomResponse> removeSingleUserFromRole(@RequestParam(name = "userId") Long userId, @RequestParam(name = "roleId")Long roleId){
         return roleService.removeUserFromRole(userId, roleId);
     }
 
     @PostMapping("/assign-user-to-role")
-    public UserEntity assignUserToRole(@RequestParam(name = "userId") Long userId, @RequestParam(name = "roleId")Long roleId){
+    public ResponseEntity<CustomResponse> assignUserToRole(@RequestParam(name = "userId") Long userId, @RequestParam(name = "roleId")Long roleId){
         return roleService.assignUserToRole(userId, roleId);
     }
 
