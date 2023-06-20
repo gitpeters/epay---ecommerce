@@ -333,6 +333,7 @@ public class ProductServiceImpl implements IProductService{
                     .products(carts)
                     .reference(orderReference)
                     .user(user)
+                    .status("Processing")
                     .build();
             OrderResponse response = OrderResponse.builder()
                     .totalAmount(totalAmount)

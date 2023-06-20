@@ -17,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,10 +52,13 @@ public class UserService implements IUserService{
     private final IProductRepository productRepository;
     private final ProductImageService productImageService;
     private final IProfileAvatarRepository profileRepository;
+    private final RedisTemplate redisTemplate;
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
 
     private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/user_profile/";
+
+    private static final String PASSWORD_RESET = "code";
 
 
     @Override
@@ -126,6 +130,56 @@ public class UserService implements IUserService{
 
     private String applicationUrl(HttpServletRequest servletRequest) {
         return "http://"+servletRequest.getServerName()+":"+servletRequest.getServerPort()+servletRequest.getContextPath();
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> resetPassword(String email) throws MessagingException, UnsupportedEncodingException {
+        if(email == null){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
+        }
+        if(!validateEmail(email)){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "provide correct email format"));
+        }
+        Optional<UserEntity> userOpt = userRepository.findUserByEmail(email);
+        if(userOpt.isEmpty()){
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No account found for this email"));
+        }
+
+        UserEntity user = userOpt.get();
+        Integer token = theToken();
+        emailService.sendResetPasswordEmail(token, user);
+        redisTemplate.opsForHash().put(PASSWORD_RESET,email,token);
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Kindly proceed to "+email+" to confirm your password reset"));
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> confirmResetPassword(Integer token, ResetPasswordDto request) {
+        Integer theToken = (Integer) redisTemplate.opsForHash().get(PASSWORD_RESET, request.getEmail());
+        if(theToken != null && theToken.equals(token)){
+            if(request.getEmail() == null){
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
+            }
+
+            if(request.getNewPassword() == null){
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "new password is required"));
+            }
+
+            Optional<UserEntity> userOpt = userRepository.findUserByEmail(request.getEmail());
+            if(userOpt.isEmpty()){
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No account found for this email"));
+            }
+
+            UserEntity user = userOpt.get();
+
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Your password has been successfully reset. Proceed to login"));
+        }else{
+            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Invalid token"));
+        }
+
     }
 
     @Override
@@ -442,6 +496,13 @@ public class UserService implements IUserService{
         }
         String[] result = new String[emptyNames.size()];
         return emptyNames.toArray(result);
+    }
+
+    public static int theToken() {
+        Random random = new Random();
+        int min = 100000; // Minimum 6-digit number
+        int max = 999999; // Maximum 6-digit number
+        return random.nextInt(max - min + 1) + min;
     }
 
 }

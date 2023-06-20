@@ -1,10 +1,7 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
-import com.peters.User_Registration_and_Email_Verification.user.dto.ChangePasswordDTO;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
+import com.peters.User_Registration_and_Email_Verification.user.dto.*;
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
 import jakarta.mail.MessagingException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,4 +35,8 @@ public interface IUserService {
     ResponseEntity<CustomResponse> uploadProfilePicture(Long userId, MultipartFile file) throws IOException;
 
     ResponseEntity<CustomResponse> fetchProfilePicture(Long userId);
+
+    ResponseEntity<CustomResponse> resetPassword(String email) throws MessagingException, UnsupportedEncodingException;
+
+    ResponseEntity<CustomResponse> confirmResetPassword(Integer token, ResetPasswordDto request);
 }

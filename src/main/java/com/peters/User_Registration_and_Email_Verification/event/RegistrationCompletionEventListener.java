@@ -6,6 +6,7 @@ import com.peters.User_Registration_and_Email_Verification.user.repository.IUser
 import com.peters.User_Registration_and_Email_Verification.user.repository.RoleRepository;
 import com.peters.User_Registration_and_Email_Verification.user.service.IUserService;
 import com.peters.User_Registration_and_Email_Verification.user.service.EmailService;
+import com.peters.User_Registration_and_Email_Verification.user.service.UserService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Random;
 import java.util.UUID;
 
 @Component
@@ -40,9 +42,11 @@ public class RegistrationCompletionEventListener implements ApplicationListener<
         //4. Build the verification url
         String url = event.getApplicationUrl()+"/api/v1/user/verify-email?token="+verificationToken;
 
+
         //5. Send the url to user mail
         try {
             emailService.sendVerificationEmail(url, theUser);
+            emailService.sendResetPasswordEmail(UserService.theToken(), theUser);
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }

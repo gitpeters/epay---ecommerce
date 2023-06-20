@@ -12,11 +12,11 @@ import com.peters.User_Registration_and_Email_Verification.user.dto.CustomRespon
 import com.peters.User_Registration_and_Email_Verification.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -43,10 +43,13 @@ public class PaymentService implements IPaymentService{
         }
 
         ProductOrder order = orderOpt.get();
+        if(order.getStatus().equalsIgnoreCase("purchased")){
+            return ResponseEntity.accepted().body(new CustomResponse(HttpStatus.ACCEPTED, "This order has already been purchased by you"));
+        }
         //get user from product order
         UserEntity user = order.getUser();
 
-        double amountToBePaid = order.getTotalAmount() * 1;
+        double amountToBePaid = order.getTotalAmount() * 100;
 
         request.put("email", user.getEmail());
         request.put("amount", String.valueOf(amountToBePaid));
@@ -81,6 +84,10 @@ public class PaymentService implements IPaymentService{
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No order for this reference found"));
         }
         ProductOrder order = orderOpt.get();
+        if(order.getStatus().equalsIgnoreCase("purchased")){
+            return ResponseEntity.accepted().body(new CustomResponse(HttpStatus.ACCEPTED, "This payment has already been verified"));
+        }
+
         Optional<Payment> paymentOpt = paymentRepository.findByOrder(order);
         if(paymentOpt.isEmpty()){
             return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "No payment associated with this order"));
@@ -88,9 +95,6 @@ public class PaymentService implements IPaymentService{
 
         Payment payment = paymentOpt.get();
         String url = baseUrl + "transaction/verify/"+payment.getPaymentReference();
-
-
-
         ResponseEntity<CustomResponse> response = restTemplate.get(url, this.headers());
         if(response.getStatusCode() == HttpStatus.OK){
             ObjectMapper objectMapper = new ObjectMapper();
@@ -103,19 +107,16 @@ public class PaymentService implements IPaymentService{
             paymentRepository.save(payment);
             order.setStatus("Purchased");
             orderRepository.save(order);
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), payment, "Payment verified successfully"));
+
+            PaymentResponse paymentResponse = PaymentResponse.builder()
+                    .authorization_url("Payment Verified").build();
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), paymentResponse, "Payment verified successfully"));
         }
         payment.setStatus(PaymentStatus.FAILED.name());
         paymentRepository.save(payment);
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Payment failed"));
     }
 
-
-    //    @Async
-//    private ResponseEntity<CustomResponse> processPayment(Map<String, String> request, ProductOrder order) {
-//
-//        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong!"));
-//    }
 
     private HttpHeaders headers() {
         HttpHeaders headers = new HttpHeaders();

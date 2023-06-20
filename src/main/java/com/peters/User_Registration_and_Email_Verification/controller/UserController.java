@@ -2,10 +2,7 @@ package com.peters.User_Registration_and_Email_Verification.controller;
 
 import com.peters.User_Registration_and_Email_Verification.product.dto.CartResponse;
 import com.peters.User_Registration_and_Email_Verification.product.service.IProductService;
-import com.peters.User_Registration_and_Email_Verification.user.dto.CustomResponse;
-import com.peters.User_Registration_and_Email_Verification.user.dto.LoginRequestDto;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserAddressRequest;
-import com.peters.User_Registration_and_Email_Verification.user.dto.UserRequestDto;
+import com.peters.User_Registration_and_Email_Verification.user.dto.*;
 import com.peters.User_Registration_and_Email_Verification.user.service.IUserService;
 import com.peters.User_Registration_and_Email_Verification.user.service.UserAuthenticationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -77,4 +74,13 @@ public class UserController {
         return userService.addAddress(userId, request);
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<CustomResponse> resetPassword(@RequestParam(name = "email") String email) throws MessagingException, UnsupportedEncodingException {
+        return userService.resetPassword(email);
+    }
+
+    @PostMapping("/confirm-password-reset")
+    public ResponseEntity<CustomResponse> confirmResetPassword(@RequestParam(name = "token") Integer token, @RequestBody ResetPasswordDto request){
+        return userService.confirmResetPassword(token,request);
+    }
 }
