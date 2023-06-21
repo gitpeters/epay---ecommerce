@@ -13,7 +13,7 @@ public interface IRoleService {
 
     ResponseEntity<CustomResponse> createRole(UserRoleRequestDto request);
 
-    void deleteRole(Long roleId);
+    ResponseEntity<CustomResponse> deleteRole(Long roleId);
 
     ResponseEntity<CustomResponse> findByName(String name);
 

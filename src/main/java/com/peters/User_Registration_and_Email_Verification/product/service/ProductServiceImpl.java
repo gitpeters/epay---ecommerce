@@ -206,10 +206,19 @@ public class ProductServiceImpl implements IProductService{
 
         // Save the updated product
         Product updatedProduct = productRepository.save(existingProduct);
+        List<String> imagePaths = getImagePaths(updatedProduct);
+        ProductResponseDto response = ProductResponseDto.builder()
+                .id(updatedProduct.getId())
+                .name(updatedProduct.getName())
+                .description(updatedProduct.getDescription())
+                .price(updatedProduct.getPrice())
+                .categories(updatedProduct.getCategory().stream().toList())
+                .productImagePath(imagePaths)
+                .build();
 
         // Return the response
         if (updatedProduct != null) {
-            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), updatedProduct,"Successfully updated product"));
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response,"Successfully updated product"));
         }
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Something went wrong! Could not update product"));
     }

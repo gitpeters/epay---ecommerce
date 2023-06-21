@@ -42,9 +42,10 @@ public class RoleService implements IRoleService{
     }
 
     @Override
-    public void deleteRole(Long roleId) {
+    public ResponseEntity<CustomResponse> deleteRole(Long roleId) {
         this.removeAllUserFromRole(roleId);
         roleRepository.deleteById(roleId);
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Deleted successfully"));
     }
 
     @Override
@@ -65,13 +66,13 @@ public class RoleService implements IRoleService{
     @Override
     public ResponseEntity<CustomResponse> removeUserFromRole(Long userId, Long roleId) {
         Optional<UserEntity> user = userRepository.findById(userId);
-        Optional<UserRole> role = roleRepository.findById(userId);
+        Optional<UserRole> role = roleRepository.findById(roleId);
         if(role.isPresent() && role.get().getUsers().contains(user.get())){
             role.get().removeUserFromRole(user.get());
             roleRepository.save(role.get());
             return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), role.get(), "Successfully removed user from role"));
         }
-       throw new UserNotFoundException("User not found!");
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Failed to remove user from role"));
     }
 
     @Override

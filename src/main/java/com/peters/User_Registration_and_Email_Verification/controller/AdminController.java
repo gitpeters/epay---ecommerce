@@ -103,8 +103,8 @@ public class AdminController {
     }
 
     @DeleteMapping("/delete-role/{id}")
-    public void deleteRole (@PathVariable("id") Long roleId){
-        roleService.deleteRole(roleId);
+    public ResponseEntity<CustomResponse> deleteRole (@PathVariable("id") Long roleId){
+        return roleService.deleteRole(roleId);
     }
 
 
