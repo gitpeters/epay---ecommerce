@@ -1,6 +1,7 @@
 # EPAY Endpoint Documentation
 
 ePay is a commerce API created to support frictionless online purchase. The admin, customer, and vendor sections of the ePay API are segregated into three separate user groups. The Admin is fully empowered to establish and assign responsibilities to customers, view all users and products, delete users and products, update user roles, and perform other operations. Customers may browse the wide selection of goods, easily add items to their shopping carts, and take advantage of a simple checkout process with safe payment choices. Vendor has seamless access to add, update, and delete products. Businesses can offer their clients an extensive and interesting e-commerce platform thanks to ePay. The endpoint utilizes various technologies such as Spring Security, MySQL, Redis for caching, Java Message Service, Paystack for payment gateway integration, and ElasticEmail for messaging service.
+![Capture](https://github.com/gitpeters/epay---ecommerce/assets/111524304/cafa0286-950d-44b8-9a35-609ae02fd02b)
 
 ## Table of Contents
 
@@ -11,6 +12,8 @@ ePay is a commerce API created to support frictionless online purchase. The admi
 - [Technologies Used](#technologies-used)
 - [Payment Gateway](#payment-gateway)
 - [Messaging Service](#messaging-service)
+- [Documentation](#documentation)
+- [How to Use](#how-to-use)
 
 ## Features
 
@@ -71,4 +74,53 @@ The payment gateway integrated with the Ecommerce Endpoint is Paystack. It allow
 ElasticEmail is used as the messaging service for the **ePay Endpoint**. It provides email communication functionalities, including email verification and other notifications.
 
 Please refer to the relevant sections for detailed information on each feature, endpoint, or technology used in the ePay Endpoint.
+
+## Documentation
+The APIs were properly documented using Postman.
+[Postman Documentation](https://documenter.getpostman.com/view/23480248/2s93z3ekK9)
+
+## How to Use
+
+1. Clone the ePay repository to your local machine:
+```git
+git clone https://github.com/gitpeters/epay---ecommerce.git
+```
+
+2. Ensure you have the following prerequisites installed:
+- Java Development Kit (JDK)
+- IntelliJ IDE or any of your favourite IDE that supports JVM
+- Spring Boot
+- MySQL
+- Redis server
+- Postman (for testing the API)
+
+3. Set up the MySQL database by creating a new database and configuring the database connection properties in the `application.properties` file.
+   
+4. Make sure the following dependencies in added to your `pom.xml` file:
+   - spring-boot-start-data-jpa
+   - spring-boot-starter-security
+   - webjars-locator
+   - jakarta.validation-api
+   - spring-boot-starter-data-redis
+   - jackson-databind
+   - jedis
+   - hibernate-validator
+   - spring-boot-starter-web
+   - springdoc-openapi-starter-webmvc-ui
+   - spring-boot-starter-mail
+   - mysql-connector-j
+   - lomok
+
+5. Configure the Redis connection properties in the `application.properties` file. (See ``config/RedisConfig``)
+   
+6. Start the ePay application on your local machine.
+
+7. Once the application is up and running, you can use Postman or any other API testing tool to interact with the ePay API. Refer to the [Postman Documentation](https://documenter.getpostman.com/view/23480248/2s93z3ekK9) for detailed API endpoints and their request/response examples.
+
+Feel free to explore the codebase, make modifications, and customize the application to suit your specific requirements.
+
+If you encounter any issues or have any questions, please don't hesitate to reach out. Happy exploring!
+
+#epay #ecommerce #springboot #javadevelopment #documentation
+
 
