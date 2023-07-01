@@ -34,7 +34,25 @@ spring:
           auth: true
           starttls:
             enable: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+## rabbitmq connection property
+rabbitmq:
+  queue:
+    email_queue: email_message_queue
+    payment_queue: product_purchase_queue
+  exchange:
+    email_exchange: email_message_exchange
+    payment_exchange: product_purchase_exchange
+  binding:
+    email_key: email_binding_key
+    payment_key: product_purchase_binding_key
 
 paystack:
   secret-key: sk_test_03487c78f5c63bb483e06bbfc634b8f2eab2b665
   base-url: https://api.paystack.co/
+
