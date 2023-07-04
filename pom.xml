@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.peters</groupId>
-	<artifactId>User_Registration_and_Email_Verification</artifactId>
+	<artifactId>Epay</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>User_Registration_and_Email_Verification</name>
-	<description>User Registration and Email Verification</description>
+	<name>Epay</name>
+	<description>Epay</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
