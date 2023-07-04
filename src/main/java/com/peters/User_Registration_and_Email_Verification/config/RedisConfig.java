@@ -1,5 +1,6 @@
 package com.peters.User_Registration_and_Email_Verification.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +15,15 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 @EnableCaching
 public class RedisConfig {
+    @Value("${spring.redis.host}")
+    private String hostname;
+    @Value("${spring.redis.port}")
+    private int port;
     @Bean
     public JedisConnectionFactory connectionFactory(){
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
-        redisStandaloneConfiguration.setHostName("127.0.0.1"); // for localhost - change this to your site hostname
-        redisStandaloneConfiguration.setPort(6379); // redis default port
+        redisStandaloneConfiguration.setHostName(hostname); // for localhost - change this to your site hostname
+        redisStandaloneConfiguration.setPort(port); // redis default port
         //redisStandaloneConfiguration.setPassword("password"); // only set this if your redis is configured with password
 
         JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(redisStandaloneConfiguration);

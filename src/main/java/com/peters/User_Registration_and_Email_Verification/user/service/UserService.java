@@ -1,5 +1,6 @@
 package com.peters.User_Registration_and_Email_Verification.user.service;
 
+import com.peters.User_Registration_and_Email_Verification.async.AsyncRunner;
 import com.peters.User_Registration_and_Email_Verification.product.entity.Product;
 import com.peters.User_Registration_and_Email_Verification.product.entity.ProductOrder;
 import com.peters.User_Registration_and_Email_Verification.product.repository.IProductOrderRepository;
@@ -7,7 +8,6 @@ import com.peters.User_Registration_and_Email_Verification.product.repository.IP
 import com.peters.User_Registration_and_Email_Verification.product.service.ProductImageService;
 import com.peters.User_Registration_and_Email_Verification.user.dto.*;
 import com.peters.User_Registration_and_Email_Verification.user.entity.*;
-import com.peters.User_Registration_and_Email_Verification.event.RegistrationCompletePublisher;
 import com.peters.User_Registration_and_Email_Verification.user.repository.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,6 +54,7 @@ public class UserService implements IUserService{
     private final ProductImageService productImageService;
     private final IProfileAvatarRepository profileRepository;
     private final RedisTemplate redisTemplate;
+    private final AsyncRunner asyncRunner;
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
 
@@ -125,7 +126,19 @@ public class UserService implements IUserService{
         userRepository.save(newUser);
 
         // Publish
-        publisher.publishEvent(new RegistrationCompletePublisher(newUser, applicationUrl(servletRequest)));
+        //publisher.publishEvent(new RegistrationCompletePublisher(newUser, applicationUrl(servletRequest)));
+        String verificationToken = UUID.randomUUID().toString();
+        //3. Save the verification token to db
+        this.saveVerificationToken(newUser, verificationToken);
+        String url = applicationUrl(servletRequest)+"/api/v1/user/verify-email?token="+verificationToken;
+        EmailNotificationDto emailNotificationDto = EmailNotificationDto.builder()
+                .email(newUser.getEmail())
+                .firstName(newUser.getFirstName())
+                .type(NotificationType.VERIFICATION)
+                .url(url)
+                .token(verificationToken)
+                .build();
+        asyncRunner.sendNotification(emailNotificationDto);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successful! Kindly check your mail to verify your email address."));
     }
 
@@ -148,9 +161,15 @@ public class UserService implements IUserService{
 
         UserEntity user = userOpt.get();
         Integer token = theToken();
-        emailService.sendResetPasswordEmail(token, user);
+        //emailService.sendResetPasswordEmail(token, user);
         redisTemplate.opsForHash().put(PASSWORD_RESET,email,token);
         redisTemplate.expire(PASSWORD_RESET, 5, TimeUnit.MINUTES);
+        PasswordResetDto passwordReset = PasswordResetDto.builder()
+                        .email(user.getEmail())
+                                .type(NotificationType.RESET_PASSWORD)
+                                        .token(token)
+                                                .firstName(user.getFirstName()).build();
+        asyncRunner.sendResetPasswordNotification(passwordReset);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Kindly proceed to "+email+" to confirm your password reset"));
     }
 
@@ -306,7 +325,7 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseEntity<CustomResponse> verifyEmail(String token) {
-        String url = applicationUrl(servletRequest)+"/api/v1/register/resend-token?token="+token;
+        String url = applicationUrl(servletRequest)+"/api/v1/user/resend-token?token="+token;
         log.info("Resend link {} ", url);
         Optional<VerificationToken> tokenOpt = tokenRepository.findByToken(token);
         if(!tokenOpt.isPresent()){
@@ -316,7 +335,7 @@ public class UserService implements IUserService{
         if(theToken.getUser().isEnabled()){
             return ResponseEntity.ok().body(new CustomResponse(HttpStatus.FOUND, "This user has already been verified, please login"));
         }
-        String message = "<p> Link has expired.<a href=\"" + url + "\">Get a new verification link</a></p>";
+        String message = "email re-verification link: " + url;
         CustomResponse verificationResult = validateToken(token);
         if(verificationResult.getMessage().equalsIgnoreCase("Valid")){
             return ResponseEntity.ok().body(new CustomResponse(HttpStatus.OK, "Email verified successfully. Kindly proceed to login"));
@@ -341,7 +360,15 @@ public class UserService implements IUserService{
         UserEntity user = theToken.getUser();
         String url = applicationUrl(servletRequest)+"/api/v1/user/verify-email?token="+theToken.getToken();
 
-        emailService.sendVerificationEmail(url, user);
+
+        //emailService.sendVerificationEmail(url, user);
+        EmailNotificationDto emailNotificationDto = EmailNotificationDto.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .type(NotificationType.RESEND_VERIFICATION)
+                .url(url)
+                .build();
+        asyncRunner.sendNotification(emailNotificationDto);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "New verification link has been sent to your email and it will expire in 1min. Kindly check your email to activate your account"));
     }
 
