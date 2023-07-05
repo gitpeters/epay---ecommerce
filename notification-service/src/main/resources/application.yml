@@ -19,15 +19,21 @@ spring:
           auth: true
           starttls:
             enable: true
+  redis:
+    host: localhost
+    port: 6379
+
 
 ## rabbitmq connection property
 rabbitmq:
   queue:
     name: notification-queue
     reset-password: reset-password
+    dlx: dead-letter-exchange
   exchange:
     name: notification-exchange
     reset-password: reset-password
+    dlx: dead-letter-exchange
   binding:
     key: binding-key
     reset-password-key: reset-password
