@@ -69,16 +69,19 @@ public class RabbitMQConfig {
         connectionFactory.setPublisherConfirmType(CORRELATED);
         return connectionFactory;
     }
+
     @Bean
-    public Queue queue(){
+    public Queue queue() {
         return new Queue(queue);
     }
+
     @Bean
-    public TopicExchange exchange(){
+    public TopicExchange exchange() {
         return new TopicExchange(exchange);
     }
+
     @Bean
-    public Binding binding(){
+    public Binding binding() {
         return BindingBuilder
                 .bind(queue())
                 .to(exchange())
@@ -86,15 +89,17 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue resetPaswordQueue(){
+    public Queue resetPaswordQueue() {
         return new Queue(resetPasswordQueue);
     }
+
     @Bean
-    public TopicExchange resetPasswordExchange(){
+    public TopicExchange resetPasswordExchange() {
         return new TopicExchange(resetPasswordExchange);
     }
+
     @Bean
-    public Binding resetPasswordBinding(){
+    public Binding resetPasswordBinding() {
         return BindingBuilder
                 .bind(resetPaswordQueue())
                 .to(resetPasswordExchange())
@@ -102,81 +107,15 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public MessageConverter converter(){
+    public MessageConverter converter() {
         return new Jackson2JsonMessageConverter();
     }
 
-    // handled failed message
     @Bean
-    public TopicExchange dlxExchange() {
-        return new TopicExchange("dlx_exchange");
-    }
-
-    @Bean
-    public Queue dlq() {
-        return QueueBuilder.durable("dlq_queue")
-                .withArgument("x-dead-letter-exchange", exchange)
-                .withArgument("x-dead-letter-routing-key", bindingKey)
-                .build();
-    }
-
-    @Bean
-    public Binding dlqBinding() {
-        return BindingBuilder.bind(dlq())
-                .to(dlxExchange())
-                .with("#");
-    }
-
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-
-        rabbitTemplate.setMandatory(true);
-
-        rabbitTemplate.setReturnsCallback(returnedMessage -> {
-            String failedMessageKey = generateFailedMessageKey(returnedMessage.getMessage());
-            redisTemplate.opsForValue().set(failedMessageKey, returnedMessage.getMessage());
-            rabbitTemplate.convertAndSend(returnedMessage.getExchange(),
-                    returnedMessage.getRoutingKey(), returnedMessage.getMessage());
-        });
-
-
-        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
-            if (ack) {
-                String failedMessageKey = correlationData.getId();
-                redisTemplate.delete(failedMessageKey);
-            }
-        });
-
+    public AmqpTemplate amqpTemplate(){
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
+        rabbitTemplate.setMessageConverter(converter());
         return rabbitTemplate;
     }
 
-    private String generateFailedMessageKey(Message message) {
-        // Generate a unique key for the failed message based on message properties
-        MessageProperties messageProperties = message.getMessageProperties();
-        String messageId = messageProperties.getMessageId();
-        String exchange = messageProperties.getReceivedExchange();
-        String routingKey = messageProperties.getReceivedRoutingKey();
-
-        return String.format("failed-message:%s:%s:%s", exchange, routingKey, messageId);
-    }
-
-
-
-
-
-    @Bean
-    public RetryTemplate retryTemplate() {
-        RetryTemplate retryTemplate = new RetryTemplate();
-
-        FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
-        backOffPolicy.setBackOffPeriod(1000L); // Configure the delay between retries (in milliseconds)
-        retryTemplate.setBackOffPolicy(backOffPolicy);
-
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
-        retryPolicy.setMaxAttempts(3); // Configure the maximum number of retry attempts
-        retryTemplate.setRetryPolicy(retryPolicy);
-
-        return retryTemplate;
-    }
 }
