@@ -29,11 +29,12 @@ rabbitmq:
   queue:
     name: notification-queue
     reset-password: reset-password
-    dlx: dead-letter-exchange
+    login-alert: login-alert-queue
   exchange:
     name: notification-exchange
     reset-password: reset-password
-    dlx: dead-letter-exchange
+    login-alert: login-alert-exchange
   binding:
     key: binding-key
     reset-password-key: reset-password
+    login-alert-key: login-alert-binding-key

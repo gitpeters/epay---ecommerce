@@ -63,6 +63,21 @@ public class Consumer {
         });
     }
 
+    @RabbitListener(queues = {"${rabbitmq.queue.login-alert}"})
+    public void sendLoginAlert(EmailNotificationDto message) throws MessagingException, UnsupportedEncodingException {
+        log.info(String.format("Received message -> %s ", message.toString()));
+        executeWithRetry(() -> {
+            try {
+                service.sendLoginNotification(message);
+            } catch (MessagingException e) {
+                log.warn("Cause of error for resetPassword notification {} ", e.getMessage());
+                throw new RuntimeException(e);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     private void executeWithRetry(Runnable operation) {
         try {
             RetryCallback<Void, Exception> retryCallback = context -> {

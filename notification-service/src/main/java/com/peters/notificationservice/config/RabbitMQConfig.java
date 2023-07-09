@@ -34,7 +34,7 @@ import static org.springframework.amqp.rabbit.connection.CachingConnectionFactor
 public class RabbitMQConfig {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private EmailService emailService;
+
     @Value("${rabbitmq.queue.name}")
     private String queue;
     @Value("${rabbitmq.exchange.name}")
@@ -59,6 +59,13 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.binding.reset-password-key}")
     private String resetPasswordBindingKey;
 
+    @Value("${rabbitmq.queue.login-alert}")
+    private String loginAlertQueue;
+    @Value("${rabbitmq.exchange.login-alert}")
+    private String loginAlertExchange;
+    @Value("${rabbitmq.binding.login-alert-key}")
+    private String loginAlertBindingKey;
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
@@ -72,10 +79,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue() {
-        return QueueBuilder.durable(queue)
-                .withArgument("x-dead-letter-exchange", "dlx-exchange")
-                .withArgument("x-dead-letter-routing-key", "dlq-routing-key")
-                .build();
+        return new Queue(queue);
     }
 
     @Bean
@@ -83,14 +87,6 @@ public class RabbitMQConfig {
         return new TopicExchange(exchange);
     }
 
-    @Bean
-    public Queue dlq(){
-        return new Queue("dead-letter-queue");
-    }
-
-    public TopicExchange dlx(){
-        return new TopicExchange("dead-letter-exchange");
-    }
 
     @Bean
     public Binding binding() {
@@ -98,13 +94,6 @@ public class RabbitMQConfig {
                 .bind(queue())
                 .to(exchange())
                 .with(bindingKey);
-    }
-@Bean
-    public Binding dlqBinding(){
-        return BindingBuilder
-                .bind(dlq())
-                .to(dlx())
-                .with("dlq-routing-key");
     }
 
     @Bean
@@ -125,6 +114,23 @@ public class RabbitMQConfig {
                 .with(resetPasswordBindingKey);
     }
 
+    @Bean
+    public Queue loginAlertQueue(){
+        return new Queue(loginAlertQueue);
+    }
+
+    @Bean
+    public TopicExchange loginAlertExchange(){
+        return new TopicExchange(loginAlertExchange);
+    }
+
+    @Bean
+    public Binding loginBinding(){
+        return BindingBuilder
+                .bind(loginAlertQueue())
+                .to(loginAlertExchange())
+                .with(loginAlertBindingKey);
+    }
     @Bean
     public MessageConverter converter() {
         return new Jackson2JsonMessageConverter();
