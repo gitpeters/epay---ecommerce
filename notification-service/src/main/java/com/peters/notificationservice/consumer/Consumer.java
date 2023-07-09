@@ -28,7 +28,7 @@ public class Consumer {
                 try {
                     service.sendVerificationEmail(messageDto);
                 } catch (MessagingException e) {
-                    log.warn("Cause of error for email verification notification {} ", e.getMessage());
+                    log.warn("email verification notification {} ", e.getMessage());
                     throw new RuntimeException(e);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);

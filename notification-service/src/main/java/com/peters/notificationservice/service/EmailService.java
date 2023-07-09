@@ -15,10 +15,12 @@ import java.io.UnsupportedEncodingException;
 @RequiredArgsConstructor
 public class EmailService {
     private final JavaMailSender mailSender;
+
     public void sendVerificationEmail(EmailNotificationDto messageDto) throws MessagingException, UnsupportedEncodingException {
+        String imageLink = "https://i.pinimg.com/originals/b9/e7/e8/b9e7e8e510755020185a1a7ca1ff271b.png";
         String subject = "Email Verification";
         String senderName = "Central Estore Service";
-        String mailContent = "<p> Hi, "+ messageDto.getFirstName()+ ", </p>"+
+        String mailContent = "<img src="+imageLink+" /> <br/><p> Hi, "+ messageDto.getFirstName()+ ", </p>"+
                 "<p>Thank you for registering with us. "+"" +
                 "Please, follow the link below to complete your registration.</p>"+
                 "<a href=\"" +messageDto.getUrl()+ "\">Verify your email to activate your account</a>"+
@@ -33,9 +35,10 @@ public class EmailService {
     }
 
     public void reSendVerificationEmail(EmailNotificationDto messageDto) throws MessagingException, UnsupportedEncodingException {
+        String imageLink = "https://i.pinimg.com/originals/b9/e7/e8/b9e7e8e510755020185a1a7ca1ff271b.png";
         String subject = "Email Verification - Resent";
         String senderName = "Central Estore Service";
-        String mailContent = "<p> Hi, "+ messageDto.getFirstName()+ ", </p>"+
+        String mailContent = "<img src="+imageLink+" /> <br/><p> Hi, "+ messageDto.getFirstName()+ ", </p>"+
                 "<p>Thank you for registering with us. "+"" +
                 "Please, follow the link below to complete your registration.</p>"+
                 "<a href=\"" +messageDto.getUrl()+ "\">Verify your email to activate your account</a>"+
@@ -50,9 +53,10 @@ public class EmailService {
     }
 
     public void sendResetPasswordEmail(PasswordResetDto passwordReset) throws MessagingException, UnsupportedEncodingException {
+        String imageLink = "https://th.bing.com/th/id/OIP.xMQWlxxUn3HMVspv7zQHXgHaBv?pid=ImgDet&rs=1";
         String subject = "Password Reset";
         String senderName = "Central Estore Service";
-        String mailContent = "<p> Hi, "+ passwordReset.getFirstName()+ ", </p>"+
+        String mailContent = "<img src="+imageLink+" /> <br/> <p> Hi, "+ passwordReset.getFirstName()+ ", </p>"+
                 "<p>Below is the token to reset your password. "+"" +
                 "If you did not initiate this request, kindly contact admin at <b>info@techiebros.come</b>.</p>"+
                 "<h2 style='color: #057d25; letter-spacing: 0.1em'>"+passwordReset.getToken()+"</h2>"+

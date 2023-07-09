@@ -72,7 +72,10 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue() {
-        return new Queue(queue);
+        return QueueBuilder.durable(queue)
+                .withArgument("x-dead-letter-exchange", "dlx-exchange")
+                .withArgument("x-dead-letter-routing-key", "dlq-routing-key")
+                .build();
     }
 
     @Bean
@@ -81,11 +84,27 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue dlq(){
+        return new Queue("dead-letter-queue");
+    }
+
+    public TopicExchange dlx(){
+        return new TopicExchange("dead-letter-exchange");
+    }
+
+    @Bean
     public Binding binding() {
         return BindingBuilder
                 .bind(queue())
                 .to(exchange())
                 .with(bindingKey);
+    }
+@Bean
+    public Binding dlqBinding(){
+        return BindingBuilder
+                .bind(dlq())
+                .to(dlx())
+                .with("dlq-routing-key");
     }
 
     @Bean
