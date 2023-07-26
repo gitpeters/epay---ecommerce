@@ -10,6 +10,9 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 import static org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType.CORRELATED;
 /**
@@ -56,6 +59,13 @@ public class RabbitMQConfig {
     @Value("${spring.rabbitmq.password}")
     private String password;
 
+    @Value("${rabbitmq.queue.login-alert}")
+    private String loginAlertQueue;
+    @Value("${rabbitmq.exchange.login-alert}")
+    private String loginAlertExchange;
+    @Value("${rabbitmq.binding.login-alert-key}")
+    private String loginAlertBindingKey;
+
     @Bean
     public ConnectionFactory rabbitmqConnectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
@@ -87,10 +97,6 @@ public class RabbitMQConfig {
     public Queue resetPaswordQueue(){
         return new Queue(resetPasswordQueue);
     }
-//@Bean
-//public Queue resetPasswordQueue() {
-//    return declareQueueWithExpiration(resetPasswordQueue, exchange, bindingKey, 300000);
-//}
     @Bean
     public TopicExchange resetPasswordExchange(){
         return new TopicExchange(resetPasswordExchange);
@@ -101,6 +107,24 @@ public class RabbitMQConfig {
                 .bind(resetPaswordQueue())
                 .to(resetPasswordExchange())
                 .with(resetPasswordBindingKey);
+    }
+
+    @Bean
+    public Queue loginAlertQueue(){
+        return new Queue(loginAlertQueue);
+    }
+
+    @Bean
+    public TopicExchange loginAlertExchange(){
+        return new TopicExchange(loginAlertExchange);
+    }
+
+    @Bean
+    public Binding loginBinding(){
+        return BindingBuilder
+                .bind(loginAlertQueue())
+                .to(loginAlertExchange())
+                .with(loginAlertBindingKey);
     }
 
     @Bean
@@ -115,34 +139,19 @@ public class RabbitMQConfig {
         rabbitTemplate.setConnectionFactory(rabbitmqConnectionFactory());
         return rabbitTemplate;
     }
-//
-//    @PostConstruct
-//    public void setupDeadLetterExchange() {
-//        // Declare the dead letter exchange
-//        amqpAdmin.declareExchange(new DirectExchange("dead-letter-exchange"));
-//
-//        // Declare the dead letter queue
-//        amqpAdmin.declareQueue(new Queue("dead-letter-queue"));
-//
-//        // Bind the dead letter queue to the dead letter exchange
-//        amqpAdmin.declareBinding(
-//                new Binding("dead-letter-queue", Binding.DestinationType.QUEUE, "dead-letter-exchange", "dead-letter-routing-key", null)
-//        );
-//    }
-//
-//    @PostConstruct
-//    public void setupRetryQueue() {
-//        declareQueueWithExpiration("retry-queue", exchange, bindingKey, 300000);
-//    }
-//
-//    private Queue declareQueueWithExpiration(String queueName, String exchangeName, String routingKey, int messageTtl) {
-//        // Declare the queue with message expiration
-//        Map<String, Object> args = new HashMap<>();
-//        args.put("x-dead-letter-exchange", exchangeName);
-//        args.put("x-dead-letter-routing-key", routingKey);
-//        args.put("x-message-ttl", messageTtl); // 5 minutes
-//        amqpAdmin.declareQueue(new Queue(queueName, true, false, false, args));
-//        return new Queue(queueName);
-//    }
+    @Bean
+    public RetryTemplate retryTemplate() {
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
+        backOffPolicy.setBackOffPeriod(1000L); // Configure the delay between retries (in milliseconds)
+        retryTemplate.setBackOffPolicy(backOffPolicy);
+
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
+        retryPolicy.setMaxAttempts(3); // Configure the maximum number of retry attempts
+        retryTemplate.setRetryPolicy(retryPolicy);
+
+        return retryTemplate;
+    }
 
 }

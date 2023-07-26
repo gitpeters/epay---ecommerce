@@ -18,6 +18,11 @@ public class AsyncRunner {
     }
 
     @Async
+    public void sendLoginAlertNotification(EmailNotificationDto e){
+        rabbitMQPublisher.sendLoginNotification(e);
+    }
+
+    @Async
     public void sendResetPasswordNotification(PasswordResetDto resetPasswordDto){
         rabbitMQPublisher.sendResetPasswordNotification(resetPasswordDto);
     }

@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7.0.11
+    ports:
+      - "6379:6379"
+    hostname: localhost
+    container_name: redis
+
+  rabbitmq:
+    image: rabbitmq:3.12.0-management
+    ports:
+      - "5672:5672" # Rabbitmq main port
+      - "15672:15672" # Rabbitmq management UI port
+    hostname: rabbitmq
+    container_name: rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+  mydatabase:
+    image: mysql:8.0.27
+    environment:
+      MYSQL_ROOT_PASSWORD: Ab@230596
+      MYSQL_DATABASE: email_verification_service
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    image: techiebroz/epay:1.0.1
+    ports:
+      - 8081:8081
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mydatabase:3306/email_verification_service
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Ab@230596
+    depends_on:
+      - mydatabase
+    volumes:
+      - C:/Users/Hp/Documents/Springboot projects/epay/main-service/mydatabase_dump.sql:/docker-entrypoint-initdb.d/import.sql
+volumes:
+  mysql_data:
+  rabbitmq_data:

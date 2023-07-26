@@ -93,53 +93,53 @@ public class UserService implements IUserService{
     public ResponseEntity<CustomResponse> registerUser(UserRequestDto request) {
         Optional<UserEntity> userOpt = userRepository.findUserByEmail(request.getEmail());
 
-        if(userOpt.isPresent()){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "User already exists"));
-        }
-        if(request == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Request body is required"));
-        }
-        if(request.getFirstName() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "firstName is required"));
-        }
-        if(request.getLastName() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "lastName is required"));
-        }
-        if(request.getEmail() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
-        }
-        if(!validateEmail(request.getEmail())){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "provide correct email format"));
-        }
-        if(request.getPassword() == null){
-            return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "password is required"));
-        }
+        if (userOpt.isEmpty()) {
+            if (request == null) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Request body is required"));
+            }
+            if (request.getFirstName() == null) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "firstName is required"));
+            }
+            if (request.getLastName() == null) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "lastName is required"));
+            }
+            if (request.getEmail() == null) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "email is required"));
+            }
+            if (!validateEmail(request.getEmail())) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "provide correct email format"));
+            }
+            if (request.getPassword() == null) {
+                return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "password is required"));
+            }
 
-        UserRole role = roleRepository.findByName("ROLE_USER").get();
-        UserEntity newUser = UserEntity.builder()
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .roles(Collections.singleton(role))
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
-        userRepository.save(newUser);
+            UserRole role = roleRepository.findByName("ROLE_USER").get();
+            UserEntity newUser = UserEntity.builder()
+                    .email(request.getEmail())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .roles(Collections.singleton(role))
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .build();
+            userRepository.save(newUser);
 
-        // Publish
-        //publisher.publishEvent(new RegistrationCompletePublisher(newUser, applicationUrl(servletRequest)));
-        String verificationToken = UUID.randomUUID().toString();
-        //3. Save the verification token to db
-        this.saveVerificationToken(newUser, verificationToken);
-        String url = applicationUrl(servletRequest)+"/api/v1/user/verify-email?token="+verificationToken;
-        EmailNotificationDto emailNotificationDto = EmailNotificationDto.builder()
-                .email(newUser.getEmail())
-                .firstName(newUser.getFirstName())
-                .type(NotificationType.VERIFICATION)
-                .url(url)
-                .token(verificationToken)
-                .build();
-        asyncRunner.sendNotification(emailNotificationDto);
-        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successful! Kindly check your mail to verify your email address."));
+            // Publish
+            //publisher.publishEvent(new RegistrationCompletePublisher(newUser, applicationUrl(servletRequest)));
+            String verificationToken = UUID.randomUUID().toString();
+            //3. Save the verification token to db
+            this.saveVerificationToken(newUser, verificationToken);
+            String url = applicationUrl(servletRequest) + "/api/v1/user/verify-email?token=" + verificationToken;
+            EmailNotificationDto emailNotificationDto = EmailNotificationDto.builder()
+                    .email(newUser.getEmail())
+                    .firstName(newUser.getFirstName())
+                    .type(NotificationType.VERIFICATION)
+                    .url(url)
+                    .token(verificationToken)
+                    .build();
+            asyncRunner.sendNotification(emailNotificationDto);
+            return ResponseEntity.ok(new CustomResponse(HttpStatus.OK, "Successful! Kindly check your mail to verify your email address."));
+        }
+        return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "User already exists"));
     }
 
     private String applicationUrl(HttpServletRequest servletRequest) {
@@ -540,5 +540,6 @@ public class UserService implements IUserService{
         int max = 999999; // Maximum 6-digit number
         return random.nextInt(max - min + 1) + min;
     }
+
 
 }

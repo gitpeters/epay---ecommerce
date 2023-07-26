@@ -32,31 +32,31 @@ public class BeanConfig {
     @Autowired
     private RoleRepository roleRepository;
 
-    @Bean
-    public CommandLineRunner createDefaultUser(PlatformTransactionManager transactionManager) {
-        return args -> {
-            TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-
-            transactionTemplate.execute(status -> {
-                if (userRepository.findUserByEmail("admin@techiebros.com").isEmpty()) {
-                    UserRole role = roleRepository.findByName("ROLE_ADMIN").orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found"));
-
-                    UserEntity newUser = UserEntity.builder()
-                            .email("admin@techiebros.com")
-                            .firstName("Abraham")
-                            .lastName("Peter")
-                            .isEnabled(true)
-                            .roles(Collections.singleton(role))
-                            .password(passwordEncoder().encode("admin"))
-                            .build();
-
-                    entityManager.persist(role); // Save the UserRole entity
-                    userRepository.save(newUser); // Save the UserEntity entity
-                }
-                return null;
-            });
-        };
-    }
+//    @Bean
+//    public CommandLineRunner createDefaultUser(PlatformTransactionManager transactionManager) {
+//        return args -> {
+//            TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+//
+//            transactionTemplate.execute(status -> {
+//                if (userRepository.findUserByEmail("admin@techiebros.com").isEmpty()) {
+//                    UserRole role = roleRepository.findByName("ROLE_ADMIN").orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found"));
+//
+//                    UserEntity newUser = UserEntity.builder()
+//                            .email("admin@techiebros.com")
+//                            .firstName("Abraham")
+//                            .lastName("Peter")
+//                            .isEnabled(true)
+//                            .roles(Collections.singleton(role))
+//                            .password(passwordEncoder().encode("admin"))
+//                            .build();
+//
+//                    entityManager.persist(role); // Save the UserRole entity
+//                    userRepository.save(newUser); // Save the UserEntity entity
+//                }
+//                return null;
+//            });
+//        };
+//    }
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();

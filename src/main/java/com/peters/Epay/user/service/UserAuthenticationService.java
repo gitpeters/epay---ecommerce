@@ -1,5 +1,7 @@
 package com.peters.Epay.user.service;
 
+import com.peters.Epay.async.AsyncRunner;
+import com.peters.Epay.user.dto.EmailNotificationDto;
 import com.peters.Epay.user.dto.LoginResponse;
 import com.peters.Epay.user.entity.UserEntity;
 import com.peters.Epay.security.CustomUserDetails;
@@ -25,6 +27,7 @@ public class UserAuthenticationService {
     private final CustomerUserDetailsService userDetailsService;
     private final IUserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final AsyncRunner asyncRunner;
 
     public ResponseEntity<CustomResponse> createAuthenticationTokenAndAuthenticateUser(LoginRequestDto loginRequest) throws Exception {
         authenticateUser(loginRequest.getUsername(), loginRequest.getPassword());
@@ -41,6 +44,11 @@ public class UserAuthenticationService {
                 .email(user.getEmail())
                 .isEnabled(user.isEnabled())
                 .build();
+        EmailNotificationDto message = EmailNotificationDto.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName() +" "+ user.getLastName())
+                .build();
+        asyncRunner.sendLoginAlertNotification(message);
         return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Login successfully"));
     }
 
