@@ -1,0 +1,40 @@
+
+server:
+  port: 8085
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  mail:
+    host: smtp.elasticemail.com
+    port: 2525
+    username: depitaztech@gmail.com
+    password: 72584702918749D99F8B5147B01B2361B498
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  redis:
+    host: localhost
+    port: 6379
+
+
+## rabbitmq connection property
+rabbitmq:
+  queue:
+    name: notification-queue
+    reset-password: reset-password
+    login-alert: login-alert-queue
+  exchange:
+    name: notification-exchange
+    reset-password: reset-password
+    login-alert: login-alert-exchange
+  binding:
+    key: binding-key
+    reset-password-key: reset-password
+    login-alert-key: login-alert-binding-key
