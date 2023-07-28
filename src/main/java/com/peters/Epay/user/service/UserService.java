@@ -58,8 +58,12 @@ public class UserService implements IUserService{
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$";
     private static final Pattern pattern = Pattern.compile(EMAIL_REGEX);
 
-    private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/user_profile/";
+    // image path for local environment
+    //private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/user_profile/";
 
+    // image path for docker container environment
+    private static final String DEFAULT_IMAGE_FOLDER = "/app/user_profile/";
+    private static final String IMAGE_FOLDER = System.getenv("USER_PROFILE_FOLDER") != null ? System.getenv("USER_PROFILE_FOLDER") : DEFAULT_IMAGE_FOLDER;
     private static final String PASSWORD_RESET = "code";
 
 
@@ -113,12 +117,21 @@ public class UserService implements IUserService{
                 return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "password is required"));
             }
 
-            UserRole role = roleRepository.findByName("ROLE_USER").get();
+            Optional<UserRole> role = roleRepository.findByName("ROLE_USER");
+            UserRole adminRole = null;
+            if(!role.isPresent()){
+                UserRole newAdminUser= UserRole.builder()
+                        .name("ROLE_USER")
+                        .build();
+                adminRole= roleRepository.save(newAdminUser);
+            }else{
+                adminRole = role.get();
+            }
             UserEntity newUser = UserEntity.builder()
                     .email(request.getEmail())
                     .firstName(request.getFirstName())
                     .lastName(request.getLastName())
-                    .roles(Collections.singleton(role))
+                    .roles(Collections.singleton(adminRole))
                     .password(passwordEncoder.encode(request.getPassword()))
                     .build();
             userRepository.save(newUser);

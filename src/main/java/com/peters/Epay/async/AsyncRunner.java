@@ -1,6 +1,7 @@
 package com.peters.Epay.async;
 
 import com.peters.Epay.event.RabbitMQPublisher;
+import com.peters.Epay.product.dto.OrderMessageNotification;
 import com.peters.Epay.user.dto.EmailNotificationDto;
 import com.peters.Epay.user.dto.PasswordResetDto;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,11 @@ public class AsyncRunner {
     @Async
     public void sendResetPasswordNotification(PasswordResetDto resetPasswordDto){
         rabbitMQPublisher.sendResetPasswordNotification(resetPasswordDto);
+    }
+
+    @Async
+    public void sendOrderNotification(OrderMessageNotification notification){
+        rabbitMQPublisher.sendOrderNotification(notification);
     }
 
 }

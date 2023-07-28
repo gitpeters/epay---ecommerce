@@ -6,8 +6,10 @@ import com.peters.Epay.payment.dto.PaymentResponse;
 import com.peters.Epay.payment.dto.PaymentStatus;
 import com.peters.Epay.payment.entity.Payment;
 import com.peters.Epay.payment.repository.IPaymentRepository;
+import com.peters.Epay.product.entity.Product;
 import com.peters.Epay.product.entity.ProductOrder;
 import com.peters.Epay.product.repository.IProductOrderRepository;
+import com.peters.Epay.product.repository.IProductRepository;
 import com.peters.Epay.user.dto.CustomResponse;
 import com.peters.Epay.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
@@ -107,13 +109,13 @@ public class PaymentService implements IPaymentService{
             paymentRepository.save(payment);
             order.setStatus("Purchased");
             orderRepository.save(order);
-
             PaymentResponse paymentResponse = PaymentResponse.builder()
                     .authorization_url("Payment Verified").build();
             return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), paymentResponse, "Payment verified successfully"));
         }
         payment.setStatus(PaymentStatus.FAILED.name());
         paymentRepository.save(payment);
+
         return ResponseEntity.badRequest().body(new CustomResponse(HttpStatus.BAD_REQUEST, "Payment failed"));
     }
 

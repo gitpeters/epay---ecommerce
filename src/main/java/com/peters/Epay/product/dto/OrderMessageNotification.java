@@ -13,7 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OrderResponse {
+public class OrderMessageNotification {
+    private String userFullName;
+    private String userEmail;
     private String orderReference;
     private double totalAmount;
     private List<CartResponse> products;

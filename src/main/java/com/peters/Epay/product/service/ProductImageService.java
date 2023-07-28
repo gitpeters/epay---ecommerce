@@ -28,7 +28,12 @@ public class ProductImageService {
     private final IProductRepository productRepository;
 
 
-    private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/product_images/";
+   //Image path for local environment
+    //private static final String IMAGE_FOLDER = System.getProperty("user.dir") + "/src/main/resources/product_images/";
+
+    // Image path for container environment
+    private static final String DEFAULT_IMAGE_FOLDER = "/app/product_images/";
+    private static final String IMAGE_FOLDER = System.getenv("IMAGE_FOLDER") != null ? System.getenv("IMAGE_FOLDER") : DEFAULT_IMAGE_FOLDER;
 
     public ResponseEntity<CustomResponse> addImageToProduct(MultipartFile file, Long productId) throws IOException {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException("Product not found"));

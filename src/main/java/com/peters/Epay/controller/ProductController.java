@@ -62,10 +62,5 @@ public class ProductController {
         return productService.deleteProduct(productId);
     }
 
-    @PostMapping("/checkout")
-    public ResponseEntity<?> checkout(@RequestParam(name = "userId") Long userId){
-        return productService.checkout(userId);
-    }
-
 
 }

@@ -33,4 +33,5 @@ public interface IProductService {
 
     ResponseEntity<?> checkout(Long userId);
 
+    ResponseEntity<CustomResponse> getOrders();
 }

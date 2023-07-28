@@ -1,24 +1,64 @@
 version: '3.8'
 services:
-  redis:
+
+  main-service:
+    image: techiebroz/epay-ecommerce-api:1.0.0
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mydatabase:3306/email_verification_service
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Ab@230596
+      SPRING_RABBITMQ_HOST: my_rabbitmq  # Use the service name as the hostname
+      SPRING_REDIS_HOST: my_redis
+      IMAGE_FOLDER: /app/product_images/ # Pass the image storage path as an environment variable
+      USER_PROFILE_FOLDER: /app/user_profile/
+
+    volumes:
+          - image_data:/app/product_images/ # Mount the host directory as a volume for image storage
+          - user_avatar_data:/app/user_profile/
+    networks:
+      - my_network
+
+  notification-service:
+    image: techiebroz/epay-notification-service:1.0.0
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_RABBITMQ_HOST: my_rabbitmq  # Use the service name as the hostname
+      SPRING_REDIS_HOST: my_redis
+    networks:
+      - my_network
+
+  my_redis:
     image: redis:7.0.11
     ports:
       - "6379:6379"
-    hostname: localhost
-    container_name: redis
+    container_name: my_redis
+    hostname: my_redis
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      REDIS_DISABLE_COMMANDS: FLUSHDB,FLUSHALL
+    volumes:
+      - "redis_data:/data"
+    networks:
+      - my_network
 
-  rabbitmq:
+  my_rabbitmq:
     image: rabbitmq:3.12.0-management
     ports:
       - "5672:5672" # Rabbitmq main port
       - "15672:15672" # Rabbitmq management UI port
-    hostname: rabbitmq
-    container_name: rabbitmq
+    hostname: my_rabbitmq
+    container_name: my_rabbitmq
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - my_network
+
   mydatabase:
     image: mysql:8.0.27
     environment:
@@ -26,19 +66,16 @@ services:
       MYSQL_DATABASE: email_verification_service
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - my_network
 
-  app:
-    image: techiebroz/epay:1.0.1
-    ports:
-      - 8081:8081
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mydatabase:3306/email_verification_service
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Ab@230596
-    depends_on:
-      - mydatabase
-    volumes:
-      - C:/Users/Hp/Documents/Springboot projects/epay/main-service/mydatabase_dump.sql:/docker-entrypoint-initdb.d/import.sql
+networks:
+  my_network:
+    driver: bridge
+
 volumes:
   mysql_data:
   rabbitmq_data:
+  redis_data:
+  image_data:
+  user_avatar_data:

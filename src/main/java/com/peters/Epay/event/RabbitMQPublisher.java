@@ -1,5 +1,6 @@
 package com.peters.Epay.event;
 
+import com.peters.Epay.product.dto.OrderMessageNotification;
 import com.peters.Epay.user.dto.EmailNotificationDto;
 import com.peters.Epay.user.dto.PasswordResetDto;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,12 @@ public class RabbitMQPublisher {
     @Value("${rabbitmq.binding.reset-password-key}")
     private String resetPasswordBindingKey;
 
+    @Value("${rabbitmq.exchange.order}")
+    private String orderExchange;
+
+    @Value("${rabbitmq.binding.order}")
+    private String orderKey;
+
     public void sendNotification(EmailNotificationDto user) {
         executeWithRetry(() -> rabbitTemplate.convertAndSend(exchange, bindingKey, user));
     }
@@ -45,6 +52,10 @@ public class RabbitMQPublisher {
 
     public void sendResetPasswordNotification(PasswordResetDto message) {
         executeWithRetry(() -> rabbitTemplate.convertAndSend(resetPasswordExchange, resetPasswordBindingKey, message));
+    }
+
+    public void sendOrderNotification(OrderMessageNotification message){
+        executeWithRetry(() -> rabbitTemplate.convertAndSend(orderExchange, orderKey, message));
     }
 
     private void executeWithRetry(Runnable operation) {
@@ -58,5 +69,6 @@ public class RabbitMQPublisher {
             log.error("Failed to publish message: {}", e.getMessage());
         }
     }
+
 }
 

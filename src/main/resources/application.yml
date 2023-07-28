@@ -51,14 +51,17 @@ rabbitmq:
     name: notification-queue
     reset-password: reset-password
     login-alert: login-alert-queue
+    order: order-queue
   exchange:
     name: notification-exchange
     reset-password: reset-password
     login-alert: login-alert-exchange
+    order: order-exchange
   binding:
     key: binding-key
     reset-password-key: reset-password
     login-alert-key: login-alert-binding-key
+    order: order-key
 
 paystack:
   secret-key: sk_test_03487c78f5c63bb483e06bbfc634b8f2eab2b665

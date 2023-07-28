@@ -57,14 +57,14 @@ public class ControllerAdvice {
         return ResponseEntity.status(status).body(response);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<CustomResponse> handleGlobalException(Exception ex, WebRequest request) {
-        log.error(ex.getMessage());
-        CustomResponse errorResponse = CustomResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
-                .message(ex.getLocalizedMessage())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<CustomResponse> handleGlobalException(Exception ex, WebRequest request) {
+//        log.error(ex.getMessage());
+//        CustomResponse errorResponse = CustomResponse.builder()
+//                .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
+//                .message(ex.getLocalizedMessage())
+//                .build();
+//
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//    }
 }

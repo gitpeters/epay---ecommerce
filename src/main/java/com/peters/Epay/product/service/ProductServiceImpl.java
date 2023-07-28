@@ -1,12 +1,10 @@
 package com.peters.Epay.product.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.peters.Epay.async.AsyncRunner;
 import com.peters.Epay.exception.DuplicateException;
 import com.peters.Epay.exception.ProductNotFoundException;
-import com.peters.Epay.product.dto.CartResponse;
-import com.peters.Epay.product.dto.OrderResponse;
-import com.peters.Epay.product.dto.ProductRequestDto;
-import com.peters.Epay.product.dto.ProductResponseDto;
+import com.peters.Epay.product.dto.*;
 import com.peters.Epay.product.entity.Product;
 import com.peters.Epay.product.entity.ProductCategory;
 import com.peters.Epay.product.entity.ProductOrder;
@@ -24,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -46,6 +45,7 @@ public class ProductServiceImpl implements IProductService{
     private final IUserAddressRepository addressRepository;
     private final IProductOrderRepository orderRepository;
     private final HashOperations<String, String, Object> hashOperations;
+    private final AsyncRunner asyncRunner;
 
     private final RedisTemplate redisTemplate;
 
@@ -344,6 +344,7 @@ public class ProductServiceImpl implements IProductService{
                     .status("Processing")
                     .build();
             OrderResponse response = OrderResponse.builder()
+                    .orderReference(order.getReference())
                     .totalAmount(totalAmount)
                     .products(carts)
                     .build();
@@ -352,9 +353,33 @@ public class ProductServiceImpl implements IProductService{
 
             orderRepository.save(order);
             redisTemplate.delete(CART_ITEM);
+            OrderMessageNotification notification = OrderMessageNotification.builder()
+                    .userFullName(user.getFirstName()+" "+user.getLastName())
+                    .userEmail(user.getEmail())
+                    .orderReference(order.getReference())
+                    .totalAmount(order.getTotalAmount())
+                    .products(carts)
+                    .build();
+
+            asyncRunner.sendOrderNotification(notification);
             return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), response, "Successfully placed order"));
         }
         return ResponseEntity.badRequest().body(new CartResponse(HttpStatus.BAD_REQUEST.name(), "Your cart is empty. Kindly add some products to your cart to continue."));
+    }
+
+    @Override
+    public ResponseEntity<CustomResponse> getOrders() {
+
+
+        List<Object> orderItems = redisTemplate.opsForHash().values(ORDER_CACHE);
+        List<OrderResponse> orders = new ArrayList<>();
+
+        ObjectMapper mapper = new ObjectMapper();
+        for (Object cartItem : orderItems) {
+            OrderResponse order = mapper.convertValue(cartItem, OrderResponse.class);
+            orders.add(order);
+        }
+        return ResponseEntity.ok(new CustomResponse(HttpStatus.OK.name(), Arrays.asList(orders), "Successfully fetch orders" ));
     }
 
 }

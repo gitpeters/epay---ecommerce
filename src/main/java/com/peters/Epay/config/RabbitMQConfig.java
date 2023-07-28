@@ -66,6 +66,13 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.binding.login-alert-key}")
     private String loginAlertBindingKey;
 
+    @Value("${rabbitmq.queue.order}")
+    private String orderQueue;
+    @Value("${rabbitmq.exchange.order}")
+    private String orderExchange;
+    @Value("${rabbitmq.binding.order}")
+    private String orderBindingKey;
+
     @Bean
     public ConnectionFactory rabbitmqConnectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
@@ -125,6 +132,24 @@ public class RabbitMQConfig {
                 .bind(loginAlertQueue())
                 .to(loginAlertExchange())
                 .with(loginAlertBindingKey);
+    }
+
+    @Bean
+    public Queue orderQueue(){
+        return new Queue(orderQueue);
+    }
+
+    @Bean
+    public TopicExchange orderExchange(){
+        return new TopicExchange(orderExchange);
+    }
+
+    @Bean
+    public Binding orderBinding(){
+        return BindingBuilder
+                .bind(orderQueue())
+                .to(orderExchange())
+                .with(orderBindingKey);
     }
 
     @Bean

@@ -51,4 +51,14 @@ public class CustomerController {
         return userService.fetchProfilePicture(userId);
     }
 
+    @PostMapping("/checkout")
+    public ResponseEntity<?> checkout(@RequestParam(name = "userId") Long userId){
+        return productService.checkout(userId);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<CustomResponse> getAllOrders(){
+        return productService.getOrders();
+    }
+
 }
